@@ -40,6 +40,14 @@ function UpdateInstances()
         request.get(config.url+'api/get_data?show_instances=true', {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}}, (err, res, body) => {
         
             let data = JSON.parse(body);
+
+            if(data.status=="error")
+            {
+                console.log("Could not retrieve data from website: "+data.error);
+                resolve(false);
+                return;
+            }
+            
             
             data.data.instances.forEach(function(instance) {
                 if(!instances[instance.name])
@@ -177,7 +185,15 @@ function UpdateDevices()
     return new Promise(function(resolve) {
         request.get(config.url+'api/get_data?show_devices=true', {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}, 'jar':true}, (err, res, body) => {
         
+            if(err) {console.log(err); resolve(false); }
             let data = JSON.parse(body);       
+
+            if(data.status=="error")
+            {
+                console.log("Could not retrieve data from website: "+data.error);
+                resolve(false);
+                return;
+            }
             
             data.data.devices.forEach(function(device) {
                 if(!devices[device.uuid])
@@ -695,7 +711,7 @@ function ClearMessages()
                     {
                         resolve(true);
                     }
-                });
+                }).catch(console.error, resolve(false));
             });
         }
         else
