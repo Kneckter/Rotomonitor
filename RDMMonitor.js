@@ -223,10 +223,10 @@ function AddDevice(device)
         "status": "ok"
     };
 
-    if(devices[device.uuid].last_seen=="") { devices[device.uuid].last_seen = "Never"}
-    if(devices[device.uuid].username=="") { devices[device.uuid].username = "Unknown"}
-    if(devices[device.uuid].instance=="") {devices[device.uuid].instance = "Unassigned"}
-    if(devices[device.uuid].host=="") {devices[device.uuid].host = "Unknown"}
+    if(!devices[device.uuid].lastSeen) { devices[device.uuid].lastSeen = "Never"}
+    if(!devices[device.uuid].account) { devices[device.uuid].account = "Unknown"}
+    if(!devices[device.uuid].instance) {devices[device.uuid].instance = "Unassigned"}
+    if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
 }
 
 function UpdateDevice(device)
