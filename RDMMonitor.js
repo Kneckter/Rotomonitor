@@ -224,6 +224,10 @@ function AddDevice(device)
         "status": "ok"
     };
 
+    if(!device.last_seen) { device.last_seen = "Never"}
+    if(!device.username) { device.username = "Unknown"}
+    if(!device.instance) {device.instance = "Unassigned"}
+    if(!device.host) {device.host = "Unknown"}
 }
 
 function UpdateDevice(device)
