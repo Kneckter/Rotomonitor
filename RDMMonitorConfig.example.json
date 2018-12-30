@@ -1,0 +1,29 @@
+{
+    "token":"",
+
+    "channel": "channelID",
+    "userAlerts": ["userID"],
+
+    "url":"https://ip:9000",
+    "websiteLogin": "user",
+    "websitePassword": "password",
+
+    "postIndividualDevices":true,
+    "postInstanceStatus":true,  
+    "postDeviceSummary":true,
+
+    "showInstance": true,
+    "showAccount": true,
+    "showHost": true,
+    "showLastSeen": true,  
+    "clearMessagesOnStartup": true,  
+    
+    "pollingDelay":1,
+
+    "warningTime": 60000,
+    "offlineTime": 900000
+    
+
+    
+    
+}
