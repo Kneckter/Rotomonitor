@@ -1,3 +1,8 @@
+# Requirements
+
+npm install request
+npm install discord.js
+
 # RDMDeviceMonitor
 
 Simple Discord Bot to monitor device status for RDM
