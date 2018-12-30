@@ -1,6 +1,7 @@
 # Requirements
 
 npm install request
+
 npm install discord.js
 
 # RDMDeviceMonitor
