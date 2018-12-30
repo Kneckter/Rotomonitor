@@ -184,8 +184,7 @@ function UpdateDevices()
 {
     return new Promise(function(resolve) {
         request.get(config.url+'api/get_data?show_devices=true', {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}, 'jar':true}, (err, res, body) => {
-        
-            console.log("Data that can't be parsed:\n"+body);
+                    
             let data = JSON.parse(body);       
 
             if(data.status=="error")
