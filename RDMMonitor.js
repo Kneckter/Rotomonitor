@@ -23,6 +23,8 @@ var offlineDeviceMessage = "";
 var lastUpdatedMessage = "";
 var cleared = false;
 
+
+
 bot.login(config.token);
 
 bot.on('ready', () => {
@@ -230,7 +232,8 @@ function PostStatus()
     console.log(now+" Starting posting sequence");
     PostDevices().then(posted => {
         PostInstances().then(posted => {           
-            PostGroupedDevices().then(posted => {                            
+            PostGroupedDevices().then(posted => {    
+                SendOfflineDeviceDMs();                        
                 PostLastUpdated().then(posted => {
                     let now = new Date();
                     now = now.toLocaleString();
@@ -324,7 +327,7 @@ function PostGroupedDevices()
                         warnDeviceMessage = posted.id;
                         PostDeviceGroup(offlineDevices, offlineColor, offlineImage, 'Offline Devices', offlineDeviceMessage).then(posted => {
                             offlineDeviceMessage = posted.id;
-                            SendOfflineDeviceDMs(offlineDevices);
+                            offlineDeviceList = offlineDevices;                            
                             resolve(true);
                         });
                     });
@@ -340,27 +343,45 @@ function PostGroupedDevices()
     });
 }
 
-function SendOfflineDeviceDMs(deviceList)
+function SendOfflineDeviceDMs()
 {
-    let pause = true;
+    UpdateDevices().then(updated => {
+        let now = new Date();
+        now = now.getTime();
 
-    for(var i = 0; i < deviceList.length; i++)
-    {
-        if(!devices[deviceList[i]].alerted)
-        {
-            SendDMAlert(deviceList[i]);
-            devices[deviceList[i]].alerted = true;
-        }
-    }
+        let offlineDevices = [];
 
-    for(var deviceName in devices)
-    {
-        if(devices[deviceName].alerted && deviceList.indexOf(deviceName) == -1)
+        for(var deviceName in devices)
         {
-            devices[deviceName].alerted = false;
-            SendDeviceOnlineAlert(deviceName);
+            let device = devices[deviceName];
+            let lastSeen = new Date(0);
+            lastSeen.setUTCSeconds(device.lastSeen);
+            lastSeen = lastSeen.getTime();
+            lastSeen = now - lastSeen;                
+            if(lastSeen > offlineTime)
+            {
+                offlineDevices.push(device.name);
+            }
         }
-    }
+
+        for(var i = 0; i < offlineDevices.length; i++)
+        {
+            if(!devices[offlineDevices[i]].alerted)
+            {
+                SendDMAlert(offlineDevices[i]);
+                devices[offlineDevices[i]].alerted = true;
+            }
+        }
+
+        for(var deviceName in devices)
+        {
+            if(devices[deviceName].alerted && offlineDevices.indexOf(deviceName) == -1)
+            {
+                devices[deviceName].alerted = false;
+                SendDeviceOnlineAlert(deviceName);
+            }
+        }
+    });
 }
 
 function SendDMAlert(device)
