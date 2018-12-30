@@ -223,10 +223,10 @@ function AddDevice(device)
         "status": "ok"
     };
 
-    if(!devices[device.uuid].last_seen) { devices[device.uuid].last_seen = "Never"}
-    if(!devices[device.uuid].username) { devices[device.uuid].username = "Unknown"}
-    if(!devices[device.uuid].instance) {devices[device.uuid].instance = "Unassigned"}
-    if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
+    if(devices[device.uuid].last_seen=="") { devices[device.uuid].last_seen = "Never"}
+    if(devices[device.uuid].username=="") { devices[device.uuid].username = "Unknown"}
+    if(devices[device.uuid].instance=="") {devices[device.uuid].instance = "Unassigned"}
+    if(devices[device.uuid].host=="") {devices[device.uuid].host = "Unknown"}
 }
 
 function UpdateDevice(device)
@@ -676,6 +676,7 @@ function BuildDeviceEmbed(device)
     }
     if(config.showAccount)
     {
+        console.log(device.account); console.log(device.account=="");
         fields.push({'name':'Account', 'value':device.account, 'inline':true});
     }
     if(config.showHost)
