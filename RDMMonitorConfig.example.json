@@ -19,6 +19,9 @@
     "clearMessagesOnStartup": true,  
     
     "pollingDelay":1,
+    
+    "ignoredDevices": [],
+    "ignoredInstances": [],
 
     "warningTime": 60000,
     "offlineTime": 900000
