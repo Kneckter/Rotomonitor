@@ -739,3 +739,7 @@ function PrecisionRound(number, precision)
 	var factor = Math.pow(10, precision);
 	return Math.round(number * factor) / factor;
 }
+
+bot.on('error', (err) => {
+    console.log('An error occured: ${err}');
+});
