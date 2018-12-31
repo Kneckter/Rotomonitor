@@ -219,8 +219,7 @@ function AddDevice(device)
         "account": device.username,
         "instance": device.instance,
         "host": device.host,
-        "alerted": false,
-        "status": "ok"
+        "alerted": false        
     };
 
     if(!devices[device.uuid].lastSeen) { devices[device.uuid].lastSeen = "Never"}
@@ -242,6 +241,11 @@ function UpdateDevice(device)
         devices[device.uuid].instance = device.instance;
         devices[device.uuid].host = device.host;        
     }
+
+    if(!devices[device.uuid].lastSeen) { devices[device.uuid].lastSeen = "Never"}
+    if(!devices[device.uuid].account) { devices[device.uuid].account = "Unknown"}
+    if(!devices[device.uuid].instance) {devices[device.uuid].instance = "Unassigned"}
+    if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
 }
 
 function PostStatus()
