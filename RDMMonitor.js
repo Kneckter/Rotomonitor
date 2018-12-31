@@ -66,7 +66,7 @@ function UpdateInstances()
 
 function AddInstance(instance)
 {
-    
+    if(config.ignoredInstances.indexOf(instance.name) != -1) { return }
     switch(instance.type)
     {
         case "Auto Quest":
@@ -213,6 +213,7 @@ function UpdateDevices()
 
 function AddDevice(device)
 {
+    if(config.ignoredDevices.indexOf(device.uuid) != -1) { return }
     devices[device.uuid] = {
         "name":device.uuid,
         "lastSeen": device.last_seen,
