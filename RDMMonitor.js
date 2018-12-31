@@ -41,13 +41,19 @@ function UpdateInstances()
         
             let data = JSON.parse(body);
 
-            if(data.status=="error")
+            if(data.status=="error" || !data.data)
             {
                 console.log("Could not retrieve data from website: "+data.error);
                 resolve(false);
                 return;
             }
             
+            if(!data.data.instances)
+            {
+                console.log("Failed to retrieve instance data from the website");
+                resolve(false);
+                return;
+            }
             
             data.data.instances.forEach(function(instance) {
                 if(!instances[instance.name])
@@ -187,9 +193,16 @@ function UpdateDevices()
                     
             let data = JSON.parse(body);       
 
-            if(data.status=="error")
+            if(data.status=="error" || !data.data)
             {
                 console.log("Could not retrieve data from website: "+data.error);
+                resolve(false);
+                return;
+            }
+
+            if(!data.data.devices)
+            {
+                console.log("Failed to retrieve device data from the website");
                 resolve(false);
                 return;
             }
