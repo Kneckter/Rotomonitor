@@ -252,16 +252,14 @@ function UpdateDevice(device)
 function PostStatus()
 {
     let now = new Date();
-    now = now.toLocaleString();
-    console.log(now+" Starting posting sequence");
+    now = now.toLocaleString();    
     PostDevices().then(posted => {
         PostInstances().then(posted => {           
             PostGroupedDevices().then(posted => {    
                 SendOfflineDeviceDMs();                        
                 PostLastUpdated().then(posted => {
                     let now = new Date();
-                    now = now.toLocaleString();
-                    console.log(now + " finished posting sequence")
+                    now = now.toLocaleString();                    
                     setTimeout(PostStatus, 60000 * config.pollingDelay);
                 });
             });
@@ -274,14 +272,12 @@ function PostDevices()
 {
     return new Promise(function(resolve) {
         if(!config.postIndividualDevices)
-        {
-            console.log("Skipping individual device posts, disabled in config");
+        {            
             resolve(true);
         }
         else
         {
-            UpdateDevices().then(updated => {
-                console.log("Posting invididual device posts");
+            UpdateDevices().then(updated => {                
                 let posts = [];
                 for(var deviceID in devices)
                 {
@@ -309,8 +305,7 @@ function PostGroupedDevices()
     return new Promise(function(resolve) {
     
         if(config.postDeviceSummary)
-        {
-            console.log("Posting device summary");
+        {            
             UpdateDevices().then(updated => {
                 let now = new Date();
                 now = now.getTime();
@@ -359,8 +354,7 @@ function PostGroupedDevices()
             });  
         }
         else
-        {
-            console.log("Skipping device summary post, disabled in config");
+        {            
             resolve(true);
         }
         
@@ -509,14 +503,12 @@ function PostInstances()
 {
     return new Promise(function(resolve) {
         if(!config.postInstanceStatus)
-        {
-            console.log("Skipping instance status, disabled in config");
+        {            
             resolve(true);
         }
         else
         {
-            UpdateInstances().then(updated => {
-                console.log("Posting instance status");
+            UpdateInstances().then(updated => {                
                 let posts = [];
                 for(var instanceName in instances)
                 {
@@ -680,8 +672,7 @@ function BuildDeviceEmbed(device)
         fields.push({'name':'Instance', 'value':device.instance, 'inline':true});
     }
     if(config.showAccount)
-    {
-        console.log(device.account); console.log(device.account=="");
+    {        
         fields.push({'name':'Account', 'value':device.account, 'inline':true});
     }
     if(config.showHost)
@@ -706,8 +697,7 @@ function ClearMessages()
 {
     return new Promise(function(resolve) {
         if(config.clearMessagesOnStartup && !cleared)
-        {
-            console.log("Clearing messages");
+        {            
             cleared = true;
             let channel = bot.channels.get(config.channel);
             channel.fetchMessages({limit:99}).then(messages => {                
