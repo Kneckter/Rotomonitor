@@ -349,7 +349,7 @@ function PostGroupedDevices()
                 }
                 if(okDevices.length == 0) {okDevices.push("None")}
                 if(warnDevices.length == 0) {warnDevices.push("None")}
-                if(offlineDevices.lenth == 0) {offlineDevices.push("None")}
+                if(offlineDevices.length == 0) {offlineDevices.push("None")}
 
                 
 
