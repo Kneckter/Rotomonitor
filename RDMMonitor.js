@@ -479,6 +479,7 @@ function SendOfflineDeviceDMs()
 
 function SendDMAlert(device)
 {
+    let now = new Date();
     for(var i = 0; i < config.userAlerts.length; i++)
     {
         let user = bot.users.get(config.userAlerts[i]);
@@ -488,7 +489,7 @@ function SendDMAlert(device)
         }
         else
         {
-            user.send("Device: "+device+" is offline!").catch(error => {
+            user.send("["+now.toLocaleString()+"]"+" Device: "+device+" is offline!").catch(error => {
                 console.log("Failed to send a DM to user: "+user.id);
             });
         }
@@ -497,6 +498,7 @@ function SendDMAlert(device)
 
 function SendDeviceOnlineAlert(device)
 {
+    let now = new Date();
     for(var i = 0; i < config.userAlerts.length; i++)
     {
         let user = bot.users.get(config.userAlerts[i]);
@@ -506,7 +508,7 @@ function SendDeviceOnlineAlert(device)
         }
         else
         {
-            user.send("Device: "+device+" has come back online").catch(error => {
+            user.send("["+now.toLocaleString()+"]"+" Device: "+device+" has come back online").catch(error => {
                 console.log("Failed to send a DM to user: "+user.id);
             });
         }
