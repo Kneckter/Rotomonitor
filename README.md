@@ -34,6 +34,5 @@ clearMessagesOnStartup - will delete all messages in the channel it is going to 
 
 pollingDelay - delay in minutes in between checking device/instance status.  A value of 0 would check immediately after it finishes checking/posting status, .5 would be 30 seconds, 1 would be 60 seconds, etc...
 
-warningTime - the time in milliseconds a device must be offline before marked as yellow/warning, by default 60000(1 minute)
-offlineTime - the time in milliseconds a device must be offline before marked as red/offline and send a DM to the designated users, by default 900000(15 minutes)
-
+warningTime - the time in minutes to consider a device in warning state
+offlineTime - the time in minutes a device must be offline before marked as red/offline and send a DM to the designated users
