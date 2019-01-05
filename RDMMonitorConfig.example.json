@@ -2,7 +2,10 @@
     "token":"",
 
     "channel": "channelID",
-    "userAlerts": ["userID"],
+    "deviceStatusChannel":"channelID",
+    "instanceStatusChannel":"channelID",
+    "deviceSummaryChannel":"channelID",
+    "userAlerts": [],
 
     "url":"https://ip:9000/",
     "websiteLogin": "user",
@@ -17,12 +20,11 @@
     "showHost": true,
     "showLastSeen": true,  
     "clearMessagesOnStartup": true,  
-    
-    "pollingDelay":1,
+
     
     "ignoredDevices": [],
     "ignoredInstances": [],
 
-    "warningTime": 60000,
-    "offlineTime": 900000
+    "warningTime": 1,
+    "offlineTime": 15
 }
