@@ -7,6 +7,9 @@ const warningImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/
 const okImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/ok.png";
 const offlineImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/offline.png";
 const instanceImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/instance.png";
+const pokemonImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/pokemon.png";
+const raidImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/raids.png";
+const researchImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/research.png";
 
 const warningTime = config.warningTime * 60000;
 const offlineTime = config.offlineTime * 60000;
@@ -34,7 +37,7 @@ bot.login(config.token);
 bot.on('ready', () => {
 
 
-    if(warningTime > 1000 || offlineTime > 1000)
+    if(config.warningTime > 1000 || config.offlineTime > 1000)
     {
         console.log("WARNING warningTime and offlineTime should be in MINUTES not milliseconds");
     }
@@ -117,7 +120,8 @@ function AddInstance(instance)
 
             instances[instance.name] = {
                 'name':instance.name,
-                'status':'Boostrapping: '+instance.status.bootstrapping.current_count+'/'+instance.status.bootstrapping.total_count+'('+percent+'%)'
+                'status':'Boostrapping: '+instance.status.bootstrapping.current_count+'/'+instance.status.bootstrapping.total_count+'('+percent+'%)',
+                'type':'research'
             }
         }
         else
@@ -128,37 +132,59 @@ function AddInstance(instance)
 
             instances[instance.name] = {
                 'name':instance.name,
-                'status':instance.status.quests.current_count_db+'/'+instance.status.quests.total_count+'('+percent+'%)'
+                'status':instance.status.quests.current_count_db+'/'+instance.status.quests.total_count+'('+percent+'%)',
+                'type':'research'
             }
         }
         break;
-        case "Circle Raid":
-        case "Circle Pokemon":
+        case "Circle Raid":      
         if(instance.status)
         {
             instances[instance.name] = {
                 'name':instance.name,
-                'status':'Round Time: '+instance.status.round_time+'s'
+                'status':'Round Time: '+instance.status.round_time+'s',
+                'type':'raid'
             }
         }
         else
         {
             instances[instance.name] = {
                 'name':instance.name,
-                'status': 'Round Time: N/A'
+                'status': 'Round Time: N/A',
+                'type':'raid'
+            }
+        }
+        break;  
+        case "Circle Pokemon":
+        if(instance.status)
+        {
+            instances[instance.name] = {
+                'name':instance.name,
+                'status':'Round Time: '+instance.status.round_time+'s',
+                'type':'pokemon'
+            }
+        }
+        else
+        {
+            instances[instance.name] = {
+                'name':instance.name,
+                'status': 'Round Time: N/A',
+                'type':'pokemon'
             }
         }
         break;
         case "Pokemon IV":
         instances[instance.name] = {
             'name':instance.name,
-            'status':instance.status.iv_per_hour+' IV/H'
+            'status':instance.status.iv_per_hour+' IV/H',
+            'type':'pokemon'
         }
         break;
         case "Circle Smart Raid":
         instances[instance.name] = {
             'name':instance.name,
-            'status':instance.status.scans_per_h+' Scans/H'
+            'status':instance.status.scans_per_h+' Scans/H',
+            'type':'raid'
         }
         break;
 
@@ -662,9 +688,26 @@ function BuildInstanceEmbed(instance)
 {
     let deviceList = GetDeviceList(instance);
 
-    let color = 0x0000FF;
+    let color = 0x0000FF;    
     
     let now = new Date();
+    
+    let image = instanceImage;
+
+    switch(instance.type)
+    {
+        case 'research':
+        image = researchImage;
+        break;
+        case 'pokemon':
+        image = pokemonImage;
+        break;
+        case 'raid':
+        image = raidImage;
+        break;
+        default:
+        break;
+    }
 
     let instanceDevices = "";
     if(deviceList.devices.length > 0)
@@ -685,7 +728,7 @@ function BuildInstanceEmbed(instance)
         'title':instance.name,
         'color':color,
         'fields': fields,
-        'thumbnail': {url: instanceImage},
+        'thumbnail': {url: image},
         'footer': {'text':'Last Updated: '+now.toLocaleString() }
 
     }
