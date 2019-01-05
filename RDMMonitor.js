@@ -860,11 +860,20 @@ function PrecisionRound(number, precision)
 }
 
 bot.on('error', function(err)  {
+    console.log(err);
     err = JSON.stringify(err);
-    console.log('An error occured: ${err}');
+    console.log('Uncaught exception: ${err}');
 });
 
 process.on('uncaughtException', function(err) {
+    console.log(err);
     err = JSON.stringify(err);
     console.log('Uncaught exception: ${err}');
+});
+
+process.on('unhandledRejection', function(err) {
+    console.log(err);
+    err = JSON.stringify(err);
+    console.log('Uncaught exception: ${err}');
+
 });
