@@ -19,7 +19,8 @@ const warningColor = 0xFFFF00;
 const offlineColor = 0xFF0000;
 
 const DEVICE_QUERY = 'api/get_data?show_devices=true';
-const INSTANCE_QUERY = 'api/get_data?show_instances=true'
+const INSTANCE_QUERY = 'api/get_data?show_instances=true';
+const WEBSITE_AUTH = {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}, 'jar':true};
 
 
 var devices = {};
@@ -51,12 +52,13 @@ bot.on('ready', () => {
 });
 
 function UpdateStatusLoop()
-{
+{   
     return new Promise(function(resolve) {
         UpdateDevices().then(updated => {
-            UpdateInstances().then(updated => {
+            UpdateInstances().then(updated => {               
                 setTimeout(UpdateStatusLoop, 5000);
                 resolve(true);
+                return;
             });
         });
     });
@@ -65,7 +67,14 @@ function UpdateStatusLoop()
 function UpdateInstances()
 {    
     return new Promise(function(resolve) {
-        request.get(config.url+INSTANCE_QUERY, {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}, 'jar':true}, (err, res, body) => {
+        request.get(config.url+INSTANCE_QUERY, WEBSITE_AUTH, (err, res, body) => {
+
+            if(err)
+            {
+                console.log("Error querying RDM: "+err.code);
+                resolve(false);
+                return;
+            }
         
             var data;
             try {
@@ -102,7 +111,7 @@ function UpdateInstances()
                 }
             });
             resolve(true);
-        });
+        });        
     });
 }
 
@@ -248,9 +257,24 @@ function UpdateInstance(instance)
 function UpdateDevices()
 {
     return new Promise(function(resolve) {
-        request.get(config.url+DEVICE_QUERY, {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}, 'jar':true}, (err, res, body) => {
+        request.get(config.url+DEVICE_QUERY, WEBSITE_AUTH, (err, res, body) => {
+
+            if(err)
+            {
+                console.log("Error querying RDM: "+err.code);
+                resolve(false);
+                return;
+            }
                     
-            let data = JSON.parse(body);       
+            var data;
+            try {
+                data = JSON.parse(body);
+            } catch(err) {
+                console.log("Could not retrieve data from website: "+body);
+                console.log(err);
+                resolve(false);
+                return;
+            }    
 
             if(data.status=="error" || !data.data)
             {
@@ -280,6 +304,7 @@ function UpdateDevices()
             resolve(true);
 
         });
+        
     });
 }
 
@@ -546,7 +571,7 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
         {
             channel.send({embed: embed}).then(posted => {            
             resolve(posted);
-            });
+            }).catch(err => console.error("Error sending a message: "+err));
         }
     });
 }
@@ -631,7 +656,7 @@ function PostLastUpdated()
             channel.send(lastUpdated).then(message => {
                 lastUpdatedMessage = message.id;
                 resolve(true);
-            });
+            }).catch(err => console.error("Error sending a message: "+err));
         }        
     });
 }
@@ -644,7 +669,7 @@ function PostInstance(instance)
         channel.send({'embed': message}).then(message => {
             instance.message = message.id;
             resolve(true);
-        });
+        }).catch(err => console.error("Error sending a message: "+err));
     });
 }
 
@@ -682,7 +707,7 @@ function PostDevice(device)
         channel.send({embed:message}).then(message => {
             device.message = message.id;
             resolve(true);
-        });
+        }).catch(err => console.error("Error sending a message: "+err));
     });
 }
 
@@ -859,21 +884,14 @@ function PrecisionRound(number, precision)
 	return Math.round(number * factor) / factor;
 }
 
-bot.on('error', function(err)  {
-    console.log(err);
-    err = JSON.stringify(err);
-    console.log('Uncaught exception: ${err}');
+bot.on('error', function(err)  {      
+    console.log('Uncaught exception: '+err);
 });
 
-process.on('uncaughtException', function(err) {
-    console.log(err);
-    err = JSON.stringify(err);
-    console.log('Uncaught exception: ${err}');
+process.on('uncaughtException', function(err) {       
+    console.log('Uncaught exception: '+err);
 });
 
-process.on('unhandledRejection', function(err) {
-    console.log(err);
-    err = JSON.stringify(err);
-    console.log('Uncaught exception: ${err}');
-
+process.on('unhandledRejection', function(err) {    
+    console.log('Uncaught exception: '+err);
 });
