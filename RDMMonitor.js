@@ -400,7 +400,7 @@ function PostDevices()
             }
             
             Promise.all(posts).then(finished => {                
-                PostDevices();   
+                setTimeout(PostDevices,60000);
                 if(lastUpdatedMessage) { PostLastUpdated(); }
                 resolve(true);
                 return;
@@ -457,7 +457,7 @@ function PostGroupedDevices()
                         offlineDeviceMessage = posted.id;
                         offlineDeviceList = offlineDevices;   
                         if(lastUpdatedMessage) { PostLastUpdated(); }
-                        PostGroupedDevices();
+                        setTimeout(PostGroupedDevices, 60000);
                         resolve(true);
                         return;
                     });
@@ -640,7 +640,7 @@ function PostInstances()
             }
 
             Promise.all(posts).then(finished => {
-                PostInstances();
+                setTimeout(PostInstances,60000);
                 if(lastUpdatedMessage) { PostLastUpdated(); }
                 resolve(true);                 
                 return;
