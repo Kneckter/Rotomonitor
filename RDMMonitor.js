@@ -34,12 +34,12 @@ var offlineDeviceMessage = "";
 var lastUpdatedMessage = "";
 var channelsCleared = false;
 
+var ready = false;
 
 
 bot.login(config.token);
 
 bot.on('ready', () => {
-
 
     if(config.warningTime > 1000 || config.offlineTime > 1000)
     {
@@ -49,19 +49,21 @@ bot.on('ready', () => {
    
     ClearAllChannels().then(result => {
         UpdateStatusLoop().then(updated => {
+            ready = true;
             PostStatus();        
         });
     });
+
+    firstRun = false;
 });
 
 function UpdateStatusLoop()
-{   
-    return new Promise(function(resolve) {
+{       
+    return new Promise(function(resolve) {        
         UpdateDevices().then(updated => {
             UpdateInstances().then(updated => {               
                 setTimeout(UpdateStatusLoop, 5000);
-                resolve(true);
-                return;
+                resolve(true);               
             });
         });
     });
@@ -377,11 +379,18 @@ function PostStatus()
 }
 
 function PostDevices()
-{
-    return new Promise(function(resolve) {
+{    
+   
+    return new Promise(function(resolve) {   
+        if(!ready)
+        {
+            resolve(false);
+            return;
+        }     
         if(!config.postIndividualDevices)
         {            
             resolve(true);
+            return;
         }
         else
         {              
@@ -412,8 +421,13 @@ function PostDevices()
 
 function PostGroupedDevices()
 {
-    return new Promise(function(resolve) {
     
+    return new Promise(function(resolve) {  
+        if(!ready)
+        {
+            resolve(false);
+            return;
+        }
         if(config.postDeviceSummary)
         {  
             let now = new Date();
@@ -476,6 +490,11 @@ function PostGroupedDevices()
 
 function SendOfflineDeviceDMs()
 {
+    if(!ready)
+    {
+        return;
+    }   
+    
 
     let now = new Date();
     now = now.getTime();
@@ -618,7 +637,13 @@ function GetDeviceString(deviceList)
 
 function PostInstances()
 {
-    return new Promise(function(resolve) {
+    
+    return new Promise(function(resolve) {    
+        if(!ready)
+        {
+            resolve(false);
+            return;
+        }   
         if(!config.postInstanceStatus)
         {            
             resolve(true);
@@ -653,6 +678,7 @@ function PostInstances()
 function PostLastUpdated()
 {
     return new Promise(function(resolve) {
+        if(!ready) { resolve(false); return; }
         let channel = config.deviceSummaryChannel ? bot.channels.get(config.deviceSummaryChannel) : bot.channels.get(config.channel);
         let now = new Date();
         let lastUpdated = "Last Updated at: **"+now.toLocaleString()+"**";
@@ -968,14 +994,27 @@ function PrecisionRound(number, precision)
 	return Math.round(number * factor) / factor;
 }
 
+function RestartBot()
+{
+    console.log("Restarting bot due to error");  
+    ready = false;  
+    bot.destroy().then(destroyed => {
+        bot.login(config.token);
+        
+    });
+}
+
 bot.on('error', function(err)  {      
     console.log('Uncaught exception: '+err);
+    RestartBot();
 });
 
 process.on('uncaughtException', function(err) {       
     console.log('Uncaught exception: '+err);
+    RestartBot();
 });
 
 process.on('unhandledRejection', function(err) {    
     console.log('Uncaught exception: '+err);
+    RestartBot();
 });
