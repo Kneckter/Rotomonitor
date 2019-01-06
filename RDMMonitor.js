@@ -828,7 +828,13 @@ function BuildDeviceEmbed(device)
     }
     if(config.showOnlineTime)
     {
-        fields.push({'name':'Current Uptime', 'value':(now - device.lastBuildTimestamp) / 1000 + 's', 'inline':true});
+        let currentUptime = 0;
+        if(device.state=="ok")
+        {
+            currentUptime =(now - device.lastBuildTimestamp) / 1000;
+        }
+
+        fields.push({'name':'Current Uptime', 'value':currentUptime + 's', 'inline':true});
     }
    
 
