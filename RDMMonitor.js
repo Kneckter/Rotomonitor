@@ -10,7 +10,7 @@ const instanceImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor
 const pokemonImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/pokemon.png";
 const raidImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/raids.png";
 const researchImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/research.png";
-const ivImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/research.png";
+const ivImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/iv.png";
 
 const warningTime = config.warningTime * 60000;
 const offlineTime = config.offlineTime * 60000;
