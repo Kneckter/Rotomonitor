@@ -10,6 +10,7 @@ const instanceImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor
 const pokemonImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/pokemon.png";
 const raidImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/raids.png";
 const researchImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/research.png";
+const ivImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/research.png";
 
 const warningTime = config.warningTime * 60000;
 const offlineTime = config.offlineTime * 60000;
@@ -186,7 +187,7 @@ function AddInstance(instance)
         instances[instance.name] = {
             'name':instance.name,
             'status':instance.status.iv_per_hour+' IV/H',
-            'type':'pokemon'
+            'type':'iv'
         }
         break;
         case "Circle Smart Raid":
@@ -731,6 +732,9 @@ function BuildInstanceEmbed(instance)
         break;
         case 'raid':
         image = raidImage;
+        break;
+        case 'iv':
+        image = ivImage;
         break;
         default:
         break;
