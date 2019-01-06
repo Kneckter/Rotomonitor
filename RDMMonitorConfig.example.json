@@ -5,6 +5,7 @@
     "deviceStatusChannel":"channelID",
     "instanceStatusChannel":"channelID",
     "deviceSummaryChannel":"channelID",
+
     "userAlerts": [],
 
     "url":"https://ip:9000/",
@@ -19,12 +20,15 @@
     "showAccount": true,
     "showHost": true,
     "showLastSeen": true,  
-    "clearMessagesOnStartup": true,  
+    "showBuildCount": true,
+    "showOnlineTime": true,
 
+    "clearMessagesOnStartup": true,  
     
     "ignoredDevices": [],
     "ignoredInstances": [],
 
     "warningTime": 1,
-    "offlineTime": 15
+    "offlineTime": 15,
+    "rebuildTime": 0.25
 }

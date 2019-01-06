@@ -3,6 +3,7 @@ const bot=new Discord.Client();
 const request = require('request');
 const config = require('./RDMMonitorConfig.json');
 
+
 const warningImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/warned.png";
 const okImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/ok.png";
 const offlineImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/offline.png";
@@ -14,6 +15,7 @@ const ivImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/maste
 
 const warningTime = config.warningTime * 60000;
 const offlineTime = config.offlineTime * 60000;
+const rebuildTime = config.rebuildTime * 60000;
 
 const okColor = 0x008000;
 const warningColor = 0xFFFF00;
@@ -42,7 +44,7 @@ bot.on('ready', () => {
     if(config.warningTime > 1000 || config.offlineTime > 1000)
     {
         console.log("WARNING warningTime and offlineTime should be in MINUTES not milliseconds");
-    }
+    }    
     
    
     ClearAllChannels().then(result => {
@@ -118,7 +120,10 @@ function UpdateInstances()
 
 function AddInstance(instance)
 {
-    if(config.ignoredInstances.indexOf(instance.name) != -1) { return }
+    if(config.ignoredInstances.length > 0)
+    {
+        if(config.ignoredInstances.indexOf(instance.name) != -1) { return }
+    }
     switch(instance.type)
     {
         case "Auto Quest":
@@ -135,7 +140,7 @@ function AddInstance(instance)
             }
         }
         else
-        {
+        {            
             let percent = instance.status.quests.current_count_db / instance.status.quests.total_count;
             percent *= 100;
             percent = PrecisionRound(percent, 2);
@@ -311,20 +316,27 @@ function UpdateDevices()
 
 function AddDevice(device)
 {
-    if(config.ignoredDevices.indexOf(device.uuid) != -1) { return }
+    if(config.ignoredDevices.length > 0)
+    {
+        if(config.ignoredDevices.indexOf(device.uuid) != -1) { return } 
+    }
+
     devices[device.uuid] = {
         "name":device.uuid,
         "lastSeen": device.last_seen,
         "account": device.username,
         "instance": device.instance,
         "host": device.host,
-        "alerted": false        
+        "alerted": false,
+        "builds":0
     };
 
     if(!devices[device.uuid].lastSeen) { devices[device.uuid].lastSeen = "Never"}
     if(!devices[device.uuid].account) { devices[device.uuid].account = "Unknown"}
     if(!devices[device.uuid].instance) {devices[device.uuid].instance = "Unassigned"}
     if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
+
+    UpdateDeviceState(devices[device.uuid]);
 }
 
 function UpdateDevice(device)
@@ -345,6 +357,8 @@ function UpdateDevice(device)
     if(!devices[device.uuid].account) { devices[device.uuid].account = "Unknown"}
     if(!devices[device.uuid].instance) {devices[device.uuid].instance = "Unassigned"}
     if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
+
+    UpdateDeviceState(devices[device.uuid]);
 }
 
 function PostStatus()
@@ -774,6 +788,8 @@ function BuildDeviceEmbed(device)
     let color = okColor;
     let image = okImage;
 
+    let now = new Date();
+
     if(config.showLastSeen)
     {
         let now = new Date();
@@ -806,8 +822,15 @@ function BuildDeviceEmbed(device)
     {
         fields.push({'name':'Host', 'value':device.host, 'inline':true});
     }
-
-    let now = new Date();
+    if(config.showBuildCount)
+    {
+        fields.push({'name':'Build Count', 'value':device.builds, 'inline':true});
+    }
+    if(config.showOnlineTime)
+    {
+        fields.push({'name':'Current Uptime', 'value':(now - device.lastBuildTimestamp) / 1000 + 's', 'inline':true});
+    }
+   
 
     let embedMSG = {
         'title': device.name,
@@ -828,10 +851,10 @@ function ClearAllChannels()
 
         let cleared = [];
 
+        cleared.push(ClearMessages(config.channel));
         cleared.push(ClearMessages(config.deviceStatusChannel));
         cleared.push(ClearMessages(config.instanceStatusChannel));
-        cleared.push(ClearMessages(config.deviceSummaryChannel));
-        cleared.push(ClearMessages(config.channel));
+        cleared.push(ClearMessages(config.deviceSummaryChannel));        
 
         Promise.all(cleared).then(done => {
             channelsCleared = true;
@@ -880,6 +903,57 @@ function GetDeviceList(instance)
     }
 
     return {'count':count, 'devices':deviceList };
+}
+
+function UpdateDeviceState(device)
+{
+    let now = new Date().getTime();
+    let lastSeen = new Date(0);
+    lastSeen.setUTCSeconds(device.lastSeen);
+    lastSeen = lastSeen.getTime();
+    lastSeen = now - lastSeen;
+    
+    let deviceState = "ok";
+    if(lastSeen > rebuildTime) {deviceState = "warn"}
+    if(lastSeen > offlineTime) {deviceState = "offline"}    
+    
+
+    if(!device.state)
+    {
+        device.state = deviceState;
+        if(deviceState=="ok")
+        {
+            device.lastBuild = "Before Bot startup";
+            device.lastBuildTimestamp = new Date().getTime();
+        }
+        else
+        {
+            device.lastBuild = "Never";
+            device.lastBuildTimestamp = null;
+        }
+    }
+    else if(device.state == deviceState)
+    {
+        return;
+    }
+    else
+    {        
+        device.state = deviceState;
+        switch(deviceState)
+        {
+            case "ok":
+            device.lastBuild = new Date().toLocaleString();
+            device.lastBuildTimestamp = new Date().getTime();
+            break;
+            case "warn":
+            device.builds++;
+            break;
+            case "offline":
+            break;
+            default:
+            break;
+        }
+    }
 }
 
 function PrecisionRound(number, precision) 
