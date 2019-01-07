@@ -25,6 +25,7 @@ const DEVICE_QUERY = 'api/get_data?show_devices=true';
 const INSTANCE_QUERY = 'api/get_data?show_instances=true';
 const WEBSITE_AUTH = {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}, 'jar':true};
 
+var postingDelay = config.postingDelay * 60000;
 
 var devices = {};
 var instances = {};
@@ -43,8 +44,12 @@ bot.on('ready', () => {
 
     if(config.warningTime > 1000 || config.offlineTime > 1000)
     {
-        console.log("WARNING warningTime and offlineTime should be in MINUTES not milliseconds");
+        console.log(GetTimestamp()+"WARNING warningTime and offlineTime should be in MINUTES not milliseconds");
     }    
+
+    
+    if(isNaN(postingDelay)) { postingDelay = 0; }
+    
     
    
     ClearAllChannels().then(result => {
@@ -59,9 +64,11 @@ bot.on('ready', () => {
 
 function UpdateStatusLoop()
 {       
+    console.log(GetTimestamp()+"Beginning RDM query");
     return new Promise(function(resolve) {        
         UpdateDevices().then(updated => {
-            UpdateInstances().then(updated => {               
+            UpdateInstances().then(updated => {       
+                console.log(GetTimestamp()+"Finished RDM query");
                 setTimeout(UpdateStatusLoop, 5000);
                 resolve(true);               
             });
@@ -76,7 +83,7 @@ function UpdateInstances()
 
             if(err)
             {
-                console.log("Error querying RDM: "+err.code);
+                console.log(GetTimestamp()+"Error querying RDM: "+err.code);
                 resolve(false);
                 return;
             }
@@ -85,22 +92,22 @@ function UpdateInstances()
             try {
                 data = JSON.parse(body);
             } catch(err) {
-                console.log("Could not retrieve data from website: "+body);
-                console.log(err);
+                console.log(GetTimestamp()+"Could not retrieve data from website: "+body);
+                console.log(GetTimestamp()+err);
                 resolve(false);
                 return;
             }
 
             if(data.status=="error" || !data.data || !data)
             {
-                console.log("Could not retrieve data from website: "+data.error);
+                console.log(GetTimestamp()+"Could not retrieve data from website: "+data.error);
                 resolve(false);
                 return;
             }
             
             if(!data.data.instances)
             {
-                console.log("Failed to retrieve instance data from the website");
+                console.log(GetTimestamp()+"Failed to retrieve instance data from the website");
                 resolve(false);
                 return;
             }
@@ -269,7 +276,7 @@ function UpdateDevices()
 
             if(err)
             {
-                console.log("Error querying RDM: "+err.code);
+                console.log(GetTimestamp()+"Error querying RDM: "+err.code);
                 resolve(false);
                 return;
             }
@@ -278,22 +285,22 @@ function UpdateDevices()
             try {
                 data = JSON.parse(body);
             } catch(err) {
-                console.log("Could not retrieve data from website: "+body);
-                console.log(err);
+                console.log(GetTimestamp()+"Could not retrieve data from website: "+body);
+                console.log(GetTimestamp()+err);
                 resolve(false);
                 return;
             }    
 
             if(data.status=="error" || !data.data)
             {
-                console.log("Could not retrieve data from website: "+data.error);
+                console.log(GetTimestamp()+"Could not retrieve data from website: "+data.error);
                 resolve(false);
                 return;
             }
 
             if(!data.data.devices)
             {
-                console.log("Failed to retrieve device data from the website");
+                console.log(GetTimestamp()+"Failed to retrieve device data from the website");
                 resolve(false);
                 return;
             }
@@ -393,7 +400,8 @@ function PostDevices()
             return;
         }
         else
-        {              
+        {    
+            console.log(GetTimestamp()+"Posting device status");          
             let posts = [];
             for(var deviceID in devices)
             {
@@ -408,8 +416,9 @@ function PostDevices()
                 }
             }
             
-            Promise.all(posts).then(finished => {                
-                setTimeout(PostDevices,60000);
+            Promise.all(posts).then(finished => {     
+                console.log(GetTimestamp()+"Finished posting status");
+                setTimeout(PostDevices,postingDelay);
                 if(lastUpdatedMessage) { PostLastUpdated(); }
                 resolve(true);
                 return;
@@ -430,6 +439,7 @@ function PostGroupedDevices()
         }
         if(config.postDeviceSummary)
         {  
+            console.log(GetTimestamp()+"Posting device summary");
             let now = new Date();
             now = now.getTime();
 
@@ -471,7 +481,8 @@ function PostGroupedDevices()
                         offlineDeviceMessage = posted.id;
                         offlineDeviceList = offlineDevices;   
                         if(lastUpdatedMessage) { PostLastUpdated(); }
-                        setTimeout(PostGroupedDevices, 60000);
+                        console.log(GetTimestamp()+"Finished posting device summary");
+                        setTimeout(PostGroupedDevices, postingDelay);
                         resolve(true);
                         return;
                     });
@@ -532,7 +543,7 @@ function SendOfflineDeviceDMs()
         }
     }
 
-    setTimeout(SendOfflineDeviceDMs, 60000);
+    setTimeout(SendOfflineDeviceDMs,60000);
     
 }
 
@@ -544,12 +555,12 @@ function SendDMAlert(device)
         let user = bot.users.get(config.userAlerts[i]);
         if(!user)
         {
-            console.log("Cannot find a user to DM with ID: "+config.userAlerts[i]);
+            console.log(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
         }
         else
         {
-            user.send("["+now.toLocaleString()+"]"+" Device: "+device+" is offline!").catch(error => {
-                console.log("Failed to send a DM to user: "+user.id);
+            user.send(GetTimestamp()+" Device: "+device+" is offline!").catch(error => {
+                console.log(GetTimestamp()+"Failed to send a DM to user: "+user.id);
             });
         }
     }
@@ -563,12 +574,12 @@ function SendDeviceOnlineAlert(device)
         let user = bot.users.get(config.userAlerts[i]);
         if(!user)
         {
-            console.log("Cannot find a user to DM with ID: "+config.userAlerts[i]);
+            console.log(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
         }
         else
         {
-            user.send("["+now.toLocaleString()+"]"+" Device: "+device+" has come back online").catch(error => {
-                console.log("Failed to send a DM to user: "+user.id);
+            user.send(GetTimestamp()+" Device: "+device+" has come back online").catch(error => {
+                console.log(GetTimestamp()+"Failed to send a DM to user: "+user.id);
             });
         }
     }
@@ -647,9 +658,11 @@ function PostInstances()
         if(!config.postInstanceStatus)
         {            
             resolve(true);
+            return;
         }
         else
-        {         
+        {        
+            console.log(GetTimestamp()+"Posting instance status"); 
             let posts = [];
             for(var instanceName in instances)
             {
@@ -665,7 +678,8 @@ function PostInstances()
             }
 
             Promise.all(posts).then(finished => {
-                setTimeout(PostInstances,60000);
+                console.log(GetTimestamp()+"Finished posting instance status");
+                setTimeout(PostInstances,postingDelay);
                 if(lastUpdatedMessage) { PostLastUpdated(); }
                 resolve(true);                 
                 return;
@@ -813,13 +827,13 @@ function BuildDeviceEmbed(device)
 
     let color = okColor;
     let image = okImage;
-
+    
     let now = new Date();
+    now = now.getTime();
 
     if(config.showLastSeen)
     {
-        let now = new Date();
-        now = now.getTime();
+        
         let lastSeen = new Date(0);
         lastSeen.setUTCSeconds(device.lastSeen);
         fields.push({'name':'Last Seen: ', 'value': lastSeen.toLocaleString(), 'inline':true});
@@ -850,6 +864,10 @@ function BuildDeviceEmbed(device)
     }
     if(config.showBuildCount)
     {
+        if(device.builds > 0)
+        {
+            let pause = true;
+        }
         fields.push({'name':'Build Count', 'value':device.builds, 'inline':true});
     }
     if(config.showOnlineTime)
@@ -857,7 +875,7 @@ function BuildDeviceEmbed(device)
         let currentUptime = 0;
         if(device.state=="ok")
         {
-            currentUptime =(now - device.lastBuildTimestamp) / 1000;
+            currentUptime = (now - device.lastBuildTimestamp) / 1000;
         }
 
         fields.push({'name':'Current Uptime', 'value':currentUptime + 's', 'inline':true});
@@ -869,7 +887,7 @@ function BuildDeviceEmbed(device)
         'color': color,
         'thumbnail': {url: image},
         'fields':fields,
-        'footer': {'text':'Last Updated: '+now.toLocaleString() }
+        'footer': {'text':'Last Updated: '+new Date().toLocaleString() }
     };
 
     return embedMSG;
@@ -902,7 +920,7 @@ function ClearMessages(channelID)
     
         if(channelsCleared) { resolve(true); return; }
         let channel = bot.channels.get(channelID);
-        if(!channel) { resolve(false); console.log("Could not find a channel with ID: "+channelID); return;}
+        if(!channel) { resolve(false); console.log(GetTimestamp()+"Could not find a channel with ID: "+channelID); return;}
         channel.fetchMessages({limit:99}).then(messages => {                
             channel.bulkDelete(messages).then(deleted => {
                 if(messages.size > 0)
@@ -994,9 +1012,16 @@ function PrecisionRound(number, precision)
 	return Math.round(number * factor) / factor;
 }
 
+function GetTimestamp()
+{
+    let now = new Date();
+
+    return "["+now.toLocaleString()+"]";
+}
+
 function RestartBot()
 {
-    console.log("Restarting bot due to error");  
+    console.log(GetTimestamp()+"Restarting bot due to error");  
     ready = false;  
     bot.destroy().then(destroyed => {
         bot.login(config.token);
@@ -1005,16 +1030,16 @@ function RestartBot()
 }
 
 bot.on('error', function(err)  {      
-    console.log('Uncaught exception: '+err);
+    console.log(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
 
 process.on('uncaughtException', function(err) {       
-    console.log('Uncaught exception: '+err);
+    console.log(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
 
 process.on('unhandledRejection', function(err) {    
-    console.log('Uncaught exception: '+err);
+    console.log(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
