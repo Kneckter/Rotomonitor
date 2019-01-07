@@ -615,7 +615,7 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
                 }
                 message.edit({embed: embed}).then(posted => {
                     resolve(posted);
-                });
+                }).catch(console.error);
             });
         }
         else
@@ -715,7 +715,7 @@ function PostLastUpdated()
                     lastUpdatedMessage = edited.id;
                     resolve(true);
                     return;
-                });
+                }).catch(console.error);
 
             });
         }
@@ -756,7 +756,7 @@ function EditInstancePost(instance)
             let embed = BuildInstanceEmbed(instance);
             message.edit({'embed': embed}).then(edited => {
                 resolve(true);
-            });
+            }).catch(console.error);
         });
     });
 }
@@ -775,7 +775,7 @@ function EditDevicePost(device)
             let embed = BuildDeviceEmbed(device);
             message.edit({'embed': embed}).then(edited => {
                 resolve(true);
-            });
+            }).catch(console.error);
         });
     });
 }
@@ -963,7 +963,7 @@ function ClearMessages(channelID)
                     resolve(true);
                     return;
                 }
-            }).catch(console.error, resolve(false));
+            }).catch(console.error);
         });
     });
 }
