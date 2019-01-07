@@ -707,8 +707,7 @@ function PostLastUpdated()
         {
             channel.fetchMessage(lastUpdatedMessage).then(message => {
                 if(!message)
-                {
-                    lastUpdatedMessage = null;
+                {                    
                     resolve(false);
                     return;
                 }
