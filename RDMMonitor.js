@@ -83,7 +83,7 @@ function UpdateInstances()
 
             if(err)
             {
-                console.log(GetTimestamp()+"Error querying RDM: "+err.code);
+                console.error(GetTimestamp()+"Error querying RDM: "+err.code);
                 resolve(false);
                 return;
             }
@@ -92,22 +92,22 @@ function UpdateInstances()
             try {
                 data = JSON.parse(body);
             } catch(err) {
-                console.log(GetTimestamp()+"Could not retrieve data from website: "+body);
-                console.log(GetTimestamp()+err);
+                console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
+                console.error(GetTimestamp()+err);
                 resolve(false);
                 return;
             }
 
             if(data.status=="error" || !data.data || !data)
             {
-                console.log(GetTimestamp()+"Could not retrieve data from website: "+data.error);
+                console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
                 resolve(false);
                 return;
             }
             
             if(!data.data.instances)
             {
-                console.log(GetTimestamp()+"Failed to retrieve instance data from the website");
+                console.error(GetTimestamp()+"Failed to retrieve instance data from the website");
                 resolve(false);
                 return;
             }
@@ -276,7 +276,7 @@ function UpdateDevices()
 
             if(err)
             {
-                console.log(GetTimestamp()+"Error querying RDM: "+err.code);
+                console.error(GetTimestamp()+"Error querying RDM: "+err.code);
                 resolve(false);
                 return;
             }
@@ -285,22 +285,22 @@ function UpdateDevices()
             try {
                 data = JSON.parse(body);
             } catch(err) {
-                console.log(GetTimestamp()+"Could not retrieve data from website: "+body);
-                console.log(GetTimestamp()+err);
+                console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
+                console.error(GetTimestamp()+err);
                 resolve(false);
                 return;
             }    
 
             if(data.status=="error" || !data.data)
             {
-                console.log(GetTimestamp()+"Could not retrieve data from website: "+data.error);
+                console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
                 resolve(false);
                 return;
             }
 
             if(!data.data.devices)
             {
-                console.log(GetTimestamp()+"Failed to retrieve device data from the website");
+                console.error(GetTimestamp()+"Failed to retrieve device data from the website");
                 resolve(false);
                 return;
             }
@@ -555,12 +555,12 @@ function SendDMAlert(device)
         let user = bot.users.get(config.userAlerts[i]);
         if(!user)
         {
-            console.log(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
+            console.error(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
         }
         else
         {
             user.send(GetTimestamp()+" Device: "+device+" is offline!").catch(error => {
-                console.log(GetTimestamp()+"Failed to send a DM to user: "+user.id);
+                console.error(GetTimestamp()+"Failed to send a DM to user: "+user.id);
             });
         }
     }
@@ -574,12 +574,12 @@ function SendDeviceOnlineAlert(device)
         let user = bot.users.get(config.userAlerts[i]);
         if(!user)
         {
-            console.log(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
+            console.error(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
         }
         else
         {
             user.send(GetTimestamp()+" Device: "+device+" has come back online").catch(error => {
-                console.log(GetTimestamp()+"Failed to send a DM to user: "+user.id);
+                console.error(GetTimestamp()+"Failed to send a DM to user: "+user.id);
             });
         }
     }
@@ -607,6 +607,12 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
         if(messageID)
         {
             channel.fetchMessage(messageID).then(message => {
+                if(!message)
+                {
+                    console.error(GetTimestamp()+"Missing device summary message");
+                    resolve(false);
+                    return;
+                }
                 message.edit({embed: embed}).then(posted => {
                     resolve(posted);
                 });
@@ -700,8 +706,16 @@ function PostLastUpdated()
         if(lastUpdatedMessage)
         {
             channel.fetchMessage(lastUpdatedMessage).then(message => {
+                if(!message)
+                {
+                    lastUpdatedMessage = null;
+                    resolve(false);
+                    return;
+                }
                 message.edit(lastUpdated).then(edited => {
+                    lastUpdatedMessage = edited.id;
                     resolve(true);
+                    return;
                 });
 
             });
@@ -711,6 +725,7 @@ function PostLastUpdated()
             channel.send(lastUpdated).then(message => {
                 lastUpdatedMessage = message.id;
                 resolve(true);
+                return;
             }).catch(err => console.error("Error sending a message: "+err));
         }        
     });
@@ -733,6 +748,12 @@ function EditInstancePost(instance)
     return new Promise(function(resolve) {
         let channel = config.instanceStatusChannel ? bot.channels.get(config.instanceStatusChannel) : bot.channels.get(config.channel);
         channel.fetchMessage(instance.message).then(message => {
+            if(!message)
+                {
+                    console.error(GetTimestamp()+"Missing instance message");
+                    resolve(false);
+                    return;
+                }
             let embed = BuildInstanceEmbed(instance);
             message.edit({'embed': embed}).then(edited => {
                 resolve(true);
@@ -746,6 +767,12 @@ function EditDevicePost(device)
     return new Promise(function(resolve) {
         let channel = config.deviceStatusChannel ? bot.channels.get(config.deviceStatusChannel) : bot.channels.get(config.channel);
         channel.fetchMessage(device.message).then(message => {
+            if(!message)
+                {
+                    console.error(GetTimestamp()+"Missing device message");
+                    resolve(false);
+                    return;
+                }
             let embed = BuildDeviceEmbed(device);
             message.edit({'embed': embed}).then(edited => {
                 resolve(true);
@@ -921,7 +948,7 @@ function ClearMessages(channelID)
     
         if(channelsCleared) { resolve(true); return; }
         let channel = bot.channels.get(channelID);
-        if(!channel) { resolve(false); console.log(GetTimestamp()+"Could not find a channel with ID: "+channelID); return;}
+        if(!channel) { resolve(false); console.error(GetTimestamp()+"Could not find a channel with ID: "+channelID); return;}
         channel.fetchMessages({limit:99}).then(messages => {                
             channel.bulkDelete(messages).then(deleted => {
                 if(messages.size > 0)
@@ -1022,7 +1049,7 @@ function GetTimestamp()
 
 function RestartBot()
 {
-    console.log(GetTimestamp()+"Restarting bot due to error");  
+    console.error(GetTimestamp()+"Restarting bot due to error");  
     ready = false;  
     bot.destroy().then(destroyed => {
         bot.login(config.token);
@@ -1031,16 +1058,16 @@ function RestartBot()
 }
 
 bot.on('error', function(err)  {      
-    console.log(GetTimestamp()+'Uncaught exception: '+err);
+    console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
 
 process.on('uncaughtException', function(err) {       
-    console.log(GetTimestamp()+'Uncaught exception: '+err);
+    console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
 
 process.on('unhandledRejection', function(err) {    
-    console.log(GetTimestamp()+'Uncaught exception: '+err);
+    console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
