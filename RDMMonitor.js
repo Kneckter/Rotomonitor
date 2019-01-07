@@ -352,7 +352,7 @@ function UpdateDevice(device)
 {
     if(!devices[device.uuid])
     {
-        AddDevice(device);
+        return AddDevice(device);        
     }
     else
     {
@@ -879,6 +879,7 @@ function BuildDeviceEmbed(device)
         }
 
         fields.push({'name':'Current Uptime', 'value':currentUptime + 's', 'inline':true});
+        fields.push({'name':'Last Build', 'value':device.lastBuild, 'inline':true});
     }
    
 
