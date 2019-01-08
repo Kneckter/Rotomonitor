@@ -1063,7 +1063,7 @@ function RestartBot()
 bot.on('error', function(err)  {      
     if(typeof err == 'object')
     {
-        err = JSON.parse(err);
+        err = JSON.stringify(err);
     }
     console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
@@ -1072,7 +1072,7 @@ bot.on('error', function(err)  {
 process.on('uncaughtException', function(err) { 
     if(typeof err == 'object')
     {
-        err = JSON.parse(err);
+        err = JSON.stringify(err);
     }
     console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
@@ -1081,7 +1081,7 @@ process.on('uncaughtException', function(err) {
 process.on('unhandledRejection', function(err) {  
     if(typeof err == 'object')
     {
-        err = JSON.parse(err);
+        err = JSON.stringify(err);
     } 
     console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
