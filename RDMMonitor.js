@@ -133,6 +133,7 @@ function AddInstance(instance)
     {
         if(config.ignoredInstances.indexOf(instance.name) != -1) { return }
     }
+    if(!instance.status) { return; }
     switch(instance.type)
     {
         case "Auto Quest":
@@ -223,8 +224,10 @@ function UpdateInstance(instance)
     }
     else
     {
+        if(!instance.status) { return; }
         switch(instance.type)
         {
+            
             case "Auto Quest":
             if(instance.status.bootstrapping)
             {
