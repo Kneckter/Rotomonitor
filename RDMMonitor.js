@@ -1061,40 +1061,28 @@ function RestartBot()
 }
 
 bot.on('error', function(err)  {      
-    var error;
-    try{
-        error = JSON.parse(err);
-    }
-    catch
+    if(typeof err == 'object')
     {
-        error = err;
+        err = JSON.parse(err);
     }
-    console.error(GetTimestamp()+'Uncaught exception: '+error);
+    console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
 
 process.on('uncaughtException', function(err) { 
-    var error;
-    try{
-        error = JSON.parse(err);
-    }
-    catch
+    if(typeof err == 'object')
     {
-        error = err;
-    }      
-    console.error(GetTimestamp()+'Uncaught exception: '+error);
+        err = JSON.parse(err);
+    }
+    console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
 
 process.on('unhandledRejection', function(err) {  
-    var error;
-    try{
-        error = JSON.parse(err);
-    }
-    catch
+    if(typeof err == 'object')
     {
-        error = err;
-    }  
-    console.error(GetTimestamp()+'Uncaught exception: '+error);
+        err = JSON.parse(err);
+    } 
+    console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
