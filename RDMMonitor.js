@@ -212,7 +212,8 @@ function AddInstance(instance)
             'type':'raid'
         }
         break;
-
+        default:
+        return;
     }
 }
 
@@ -1060,16 +1061,40 @@ function RestartBot()
 }
 
 bot.on('error', function(err)  {      
-    console.error(GetTimestamp()+'Uncaught exception: '+err);
+    var error;
+    try{
+        error = JSON.parse(err);
+    }
+    catch
+    {
+        error = err;
+    }
+    console.error(GetTimestamp()+'Uncaught exception: '+error);
     RestartBot();
 });
 
-process.on('uncaughtException', function(err) {       
-    console.error(GetTimestamp()+'Uncaught exception: '+err);
+process.on('uncaughtException', function(err) { 
+    var error;
+    try{
+        error = JSON.parse(err);
+    }
+    catch
+    {
+        error = err;
+    }      
+    console.error(GetTimestamp()+'Uncaught exception: '+error);
     RestartBot();
 });
 
-process.on('unhandledRejection', function(err) {    
-    console.error(GetTimestamp()+'Uncaught exception: '+err);
+process.on('unhandledRejection', function(err) {  
+    var error;
+    try{
+        error = JSON.parse(err);
+    }
+    catch
+    {
+        error = err;
+    }  
+    console.error(GetTimestamp()+'Uncaught exception: '+error);
     RestartBot();
 });
