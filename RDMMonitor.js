@@ -1086,3 +1086,7 @@ process.on('unhandledRejection', function(err) {
     console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
 });
+
+bot.on('disconnect', function(closed) {
+    console.error(GetTimestamp()+'Disconnected from Discord');
+});
