@@ -1053,11 +1053,7 @@ function GetTimestamp()
 function RestartBot()
 {
     console.error(GetTimestamp()+"Restarting bot due to error");  
-    ready = false;  
-    bot.destroy().then(destroyed => {
-        bot.login(config.token);
-        
-    });
+    process.exit(1);
 }
 
 bot.on('error', function(err)  {      
@@ -1088,5 +1084,5 @@ process.on('unhandledRejection', function(err) {
 });
 
 bot.on('disconnect', function(closed) {
-    console.error(GetTimestamp()+'Disconnected from Discord');
+    console.error(GetTimestamp()+'Disconnected from Discord');    
 });
