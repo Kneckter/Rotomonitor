@@ -1052,7 +1052,7 @@ function GetTimestamp()
 
 function RestartBot()
 {
-    console.error(GetTimestamp()+"Restarting bot due to error");  
+    console.error(GetTimestamp()+"Unexpected error, bot stopping, likely websocket");  
     process.exit(1);
 }
 
