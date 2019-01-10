@@ -40,6 +40,14 @@ var ready = false;
 
 bot.login(config.token);
 
+bot.on('message', message => {
+	if(message.channel.id == config.channel){
+		if(message.content == 'restart'){
+			RestartBot();
+		}
+	}
+});
+
 bot.on('ready', () => {
 
     if(config.warningTime > 1000 || config.offlineTime > 1000)
