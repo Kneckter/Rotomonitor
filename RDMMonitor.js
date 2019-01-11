@@ -46,7 +46,7 @@ bot.on('message', message => {
 		case config.deviceStatusChannel:
 		case config.instanceStatusChannel:
 		case config.deviceSummaryChannel:
-			if(message.content == 'restart'){ RestartBot(); } break;
+			if(message.content == 'restart'){ RestartBot('manual'); } break;
 		default: return;
 	}
 });
@@ -1061,10 +1061,13 @@ function GetTimestamp()
     return "["+now.toLocaleString()+"]";
 }
 
-function RestartBot()
+function RestartBot(type)
 {
-    console.error(GetTimestamp()+"Unexpected error, bot stopping, likely websocket");  
-    process.exit(1);
+    if(type == 'manual'){ process.exit(1); }
+    else{
+        console.error(GetTimestamp()+"Unexpected error, bot stopping, likely websocket");  
+        process.exit(1);
+    }
 }
 
 bot.on('error', function(err)  {      
