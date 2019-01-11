@@ -41,10 +41,13 @@ var ready = false;
 bot.login(config.token);
 
 bot.on('message', message => {
-	if(message.channel.id == config.channel){
-		if(message.content == 'restart'){
-			RestartBot();
-		}
+	switch(message.channel.id){
+		case config.channel:
+		case config.deviceStatusChannel:
+		case config.instanceStatusChannel:
+		case config.deviceSummaryChannel:
+			if(message.content == 'restart'){ RestartBot(); } break;
+		default: return;
 	}
 });
 
