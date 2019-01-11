@@ -40,6 +40,17 @@ var ready = false;
 
 bot.login(config.token);
 
+bot.on('message', message => {
+	switch(message.channel.id){
+		case config.channel:
+		case config.deviceStatusChannel:
+		case config.instanceStatusChannel:
+		case config.deviceSummaryChannel:
+			if(message.content == 'restart'){ RestartBot('manual'); } break;
+		default: return;
+	}
+});
+
 bot.on('ready', () => {
 
     if(config.warningTime > 1000 || config.offlineTime > 1000)
@@ -1050,10 +1061,13 @@ function GetTimestamp()
     return "["+now.toLocaleString()+"]";
 }
 
-function RestartBot()
+function RestartBot(type)
 {
-    console.error(GetTimestamp()+"Unexpected error, bot stopping, likely websocket");  
-    process.exit(1);
+    if(type == 'manual'){ process.exit(1); }
+    else{
+        console.error(GetTimestamp()+"Unexpected error, bot stopping, likely websocket");  
+        process.exit(1);
+    }
 }
 
 bot.on('error', function(err)  {      
