@@ -52,7 +52,7 @@ bot.on('message', message => {
 });
 
 bot.on('ready', () => {
-
+    
     if(config.warningTime > 1000 || config.offlineTime > 1000)
     {
         console.log(GetTimestamp()+"WARNING warningTime and offlineTime should be in MINUTES not milliseconds");
@@ -70,7 +70,8 @@ bot.on('ready', () => {
         });
     });
 
-    firstRun = false;
+    return;
+    
 });
 
 function UpdateStatusLoop()
@@ -81,7 +82,8 @@ function UpdateStatusLoop()
             UpdateInstances().then(updated => {       
                 console.log(GetTimestamp()+"Finished RDM query");
                 setTimeout(UpdateStatusLoop, 5000);
-                resolve(true);               
+                resolve(true);    
+                return;           
             });
         });
     });
@@ -134,6 +136,7 @@ function UpdateInstances()
                 }
             });
             resolve(true);
+            return;
         });        
     });
 }
@@ -161,7 +164,8 @@ function AddInstance(instance)
             }
         }
         else
-        {            
+        {
+            if(!instance.status.quests) { console.log("Your RDM is out of date, please pull the latest from docker"); process.exit(0); return; }            
             let percent = instance.status.quests.current_count_db / instance.status.quests.total_count;
             percent *= 100;
             percent = PrecisionRound(percent, 2);
@@ -226,6 +230,7 @@ function AddInstance(instance)
         default:
         return;
     }
+    return;
 }
 
 function UpdateInstance(instance)
@@ -282,6 +287,7 @@ function UpdateInstance(instance)
 
         }
     }
+    return;
 }
 
 function UpdateDevices()
@@ -332,10 +338,12 @@ function UpdateDevices()
             });
 
             resolve(true);
+            return;
 
         });
         
     });
+    return;
 }
 
 function AddDevice(device)
@@ -361,6 +369,7 @@ function AddDevice(device)
     if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
 
     UpdateDeviceState(devices[device.uuid]);
+    return;
 }
 
 function UpdateDevice(device)
@@ -383,6 +392,7 @@ function UpdateDevice(device)
     if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
 
     UpdateDeviceState(devices[device.uuid]);
+    return;
 }
 
 function PostStatus()
@@ -396,7 +406,8 @@ function PostStatus()
     
     Promise.all(posted).then(done => {        
         PostLastUpdated();
-    });            
+    });      
+    return;      
     
 }
 
@@ -440,7 +451,7 @@ function PostDevices()
             });
             
         }
-    });
+    });    
 }
 
 function PostGroupedDevices()
@@ -559,6 +570,7 @@ function SendOfflineDeviceDMs()
     }
 
     setTimeout(SendOfflineDeviceDMs,60000);
+    return;
     
 }
 
@@ -579,6 +591,7 @@ function SendDMAlert(device)
             });
         }
     }
+    return;
 }
 
 function SendDeviceOnlineAlert(device)
@@ -598,6 +611,7 @@ function SendDeviceOnlineAlert(device)
             });
         }
     }
+    return;
 }
 
 
@@ -637,6 +651,7 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
         {
             channel.send({embed: embed}).then(posted => {            
             resolve(posted);
+            return;
             }).catch(err => console.error("Error sending a message: "+err));
         }
     });
@@ -753,6 +768,7 @@ function PostInstance(instance)
         channel.send({'embed': message}).then(message => {
             instance.message = message.id;
             resolve(true);
+            return;
         }).catch(err => console.error("Error sending a message: "+err));
     });
 }
@@ -771,6 +787,7 @@ function EditInstancePost(instance)
             let embed = BuildInstanceEmbed(instance);
             message.edit({'embed': embed}).then(edited => {
                 resolve(true);
+                return;
             }).catch(console.error);
         });
     });
@@ -790,6 +807,7 @@ function EditDevicePost(device)
             let embed = BuildDeviceEmbed(device);
             message.edit({'embed': embed}).then(edited => {
                 resolve(true);
+                return;
             }).catch(console.error);
         });
     });
@@ -803,6 +821,7 @@ function PostDevice(device)
         channel.send({embed:message}).then(message => {
             device.message = message.id;
             resolve(true);
+            return;
         }).catch(err => console.error("Error sending a message: "+err));
     });
 }
@@ -951,6 +970,7 @@ function ClearAllChannels()
         Promise.all(cleared).then(done => {
             channelsCleared = true;
             resolve(true);
+            return;
         });
 
     });
@@ -1046,6 +1066,7 @@ function UpdateDeviceState(device)
             break;
         }
     }
+    return;
 }
 
 function PrecisionRound(number, precision) 
@@ -1068,6 +1089,7 @@ function RestartBot(type)
         console.error(GetTimestamp()+"Unexpected error, bot stopping, likely websocket");  
         process.exit(1);
     }
+    return;
 }
 
 bot.on('error', function(err)  {      
@@ -1077,6 +1099,7 @@ bot.on('error', function(err)  {
     }
     console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
+    return;
 });
 
 process.on('uncaughtException', function(err) { 
@@ -1086,6 +1109,7 @@ process.on('uncaughtException', function(err) {
     }
     console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
+    return;
 });
 
 process.on('unhandledRejection', function(err) {  
@@ -1095,8 +1119,10 @@ process.on('unhandledRejection', function(err) {
     } 
     console.error(GetTimestamp()+'Uncaught exception: '+err);
     RestartBot();
+    return;
 });
 
 bot.on('disconnect', function(closed) {
-    console.error(GetTimestamp()+'Disconnected from Discord');    
+    console.error(GetTimestamp()+'Disconnected from Discord'); 
+    return;   
 });
