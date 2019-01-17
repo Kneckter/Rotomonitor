@@ -134,10 +134,9 @@ function UpdateInstances()
                 {
                     UpdateInstance(instance);
                 }
-            });
-            return resolve(true);            
-        }); 
-        return;       
+            });    
+            return resolve(true);                     
+        });             
     });
 }
 
@@ -331,13 +330,10 @@ function UpdateDevices()
                 {
                     UpdateDevice(device);
                 }
-            });
-
-            return resolve(true);
-            
-
+            });   
+            return resolve(true);   
         });
-        return;        
+             
     });    
 }
 
@@ -503,8 +499,7 @@ function PostGroupedDevices()
         else
         {            
             return resolve(true);           
-        }
-        return;
+        }        
     });
 }
 
@@ -564,6 +559,7 @@ function SendDMAlert(device)
         {
             user.send(GetTimestamp()+" Device: "+device+" is offline!").catch(error => {
                 console.error(GetTimestamp()+"Failed to send a DM to user: "+user.id);
+                return;
             });
         }
     }
@@ -618,16 +614,21 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
                 }
                 message.edit({embed: embed}).then(posted => {
                     return resolve(posted);
-                }).catch(console.error);
+                }).catch(error => {
+                    console.error(GetTimestamp()+"Failed to edit a post: "+error);
+                    return resolve(false);
+                });
             });
         }
         else
         {
             channel.send({embed: embed}).then(posted => {            
             return resolve(posted);            
-            }).catch(err => console.error("Error sending a message: "+err));
-        }
-        return;
+            }).catch(err => {
+                console.error(GetTimestamp()+"Error sending a message: "+err);
+                return resolve(false);
+            });
+        }        
     });
 }
 
@@ -687,8 +688,7 @@ function PostInstances()
                 if(lastUpdatedMessage) { PostLastUpdated(); }
                 return resolve(true);                                 
             });           
-        }
-        return;
+        }        
     });    
 }
 
@@ -710,7 +710,10 @@ function PostLastUpdated()
                 message.edit(lastUpdated).then(edited => {
                     lastUpdatedMessage = edited.id;
                     return resolve(true);                    
-                }).catch(console.error);
+                }).catch(error => {
+                    console.log(GetTimestamp()+"Failed to edit a post: "+error);
+                    return resolve(false);
+                });
 
             });
         }
@@ -719,9 +722,11 @@ function PostLastUpdated()
             channel.send(lastUpdated).then(message => {
                 lastUpdatedMessage = message.id;
                 return resolve(true);                
-            }).catch(err => console.error("Error sending a message: "+err));
-        }
-        return;        
+            }).catch(err => {
+                console.error(GetTimestamp()+"Error sending a message: "+err);
+                return resolve(false);
+            });
+        }             
     });
 }
 
@@ -733,8 +738,10 @@ function PostInstance(instance)
         channel.send({'embed': message}).then(message => {
             instance.message = message.id;
             return resolve(true);            
-        }).catch(err => console.error("Error sending a message: "+err));
-        return;
+        }).catch(err => {
+            console.error(GetTimestamp()+"Error sending a message: "+err);
+            return resolve(false);
+        });        
     });
 }
 
@@ -752,11 +759,10 @@ function EditInstancePost(instance)
             message.edit({'embed': embed}).then(edited => {
                 return resolve(true);                
             }).catch((error) => {
-                console.error("Failed to edit an instance message: "+error);
+                console.error(GetTimestamp()+"Failed to edit an instance message: "+error);
                 return resolve(false);
             });
-        });
-        return;
+        });        
     });
 }
 
@@ -774,11 +780,10 @@ function EditDevicePost(device)
             message.edit({'embed': embed}).then(edited => {
                 return resolve(true);                
             }).catch((error) => {
-                console.error("Failed to edit a device post: "+error);
+                console.error(GetTimestamp()+"Failed to edit a device post: "+error);
                 return resolve(false);
             });
-        });
-        return;
+        });        
     });
 }
 
@@ -790,8 +795,10 @@ function PostDevice(device)
         channel.send({embed:message}).then(message => {
             device.message = message.id;
             return resolve(true);            
-        }).catch(err => console.error("Error sending a message: "+err));
-        return;
+        }).catch(err => {
+            console.error(GetTimestamp()+"Error sending a message: "+err);
+            return resolve(false);
+        });        
     });
 }
 
@@ -964,9 +971,11 @@ function ClearMessages(channelID)
                 {
                     return resolve(true);                    
                 }
-            }).catch(console.error);
-        });
-        return;
+            }).catch(error => {
+                console.error(GetTimestamp()+"Failed to clear channel messages");
+                return resolve(false);
+            });
+        });        
     });
 }
 
