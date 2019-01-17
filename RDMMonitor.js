@@ -21,6 +21,11 @@ const okColor = 0x008000;
 const warningColor = 0xFFFF00;
 const offlineColor = 0xFF0000;
 
+const pokemonColor = 0xC0C0C0;
+const raidColor = 0x9400D3;
+const researchColor = 0xFF7F50;
+const ivColor = 0xDAA520;
+
 const DEVICE_QUERY = 'api/get_data?show_devices=true';
 const INSTANCE_QUERY = 'api/get_data?show_instances=true';
 const WEBSITE_AUTH = {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}, 'jar':true};
@@ -35,7 +40,6 @@ var offlineDeviceMessage = "";
 var lastUpdatedMessage = "";
 var channelsCleared = false;
 
-var ready = false;
 
 
 bot.login(config.token);
@@ -64,8 +68,7 @@ bot.on('ready', () => {
     
    
     ClearAllChannels().then(result => {
-        UpdateStatusLoop().then(updated => {
-            ready = true;
+        UpdateStatusLoop().then(updated => {            
             PostStatus();        
         });
     });
@@ -82,10 +85,11 @@ function UpdateStatusLoop()
             UpdateInstances().then(updated => {       
                 console.log(GetTimestamp()+"Finished RDM query");
                 setTimeout(UpdateStatusLoop, 5000);
-                resolve(true);    
-                return;           
+                return resolve(true);    
+                
             });
         });
+        return;
     });
 }
 
@@ -97,8 +101,7 @@ function UpdateInstances()
             if(err)
             {
                 console.error(GetTimestamp()+"Error querying RDM: "+err.code);
-                resolve(false);
-                return;
+                return resolve(false);                
             }
         
             var data;
@@ -107,22 +110,19 @@ function UpdateInstances()
             } catch(err) {
                 console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
                 console.error(GetTimestamp()+err);
-                resolve(false);
-                return;
+                return resolve(false);                
             }
 
             if(data.status=="error" || !data.data || !data)
             {
                 console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
-                resolve(false);
-                return;
+                return resolve(false);                
             }
             
             if(!data.data.instances)
             {
                 console.error(GetTimestamp()+"Failed to retrieve instance data from the website");
-                resolve(false);
-                return;
+                return resolve(false);                
             }
             
             data.data.instances.forEach(function(instance) {
@@ -135,9 +135,9 @@ function UpdateInstances()
                     UpdateInstance(instance);
                 }
             });
-            resolve(true);
-            return;
-        });        
+            return resolve(true);            
+        }); 
+        return;       
     });
 }
 
@@ -298,8 +298,7 @@ function UpdateDevices()
             if(err)
             {
                 console.error(GetTimestamp()+"Error querying RDM: "+err.code);
-                resolve(false);
-                return;
+                return resolve(false);                
             }
                     
             var data;
@@ -308,22 +307,19 @@ function UpdateDevices()
             } catch(err) {
                 console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
                 console.error(GetTimestamp()+err);
-                resolve(false);
-                return;
+                return resolve(false);                
             }    
 
             if(data.status=="error" || !data.data)
             {
                 console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
-                resolve(false);
-                return;
+                return resolve(false);                
             }
 
             if(!data.data.devices)
             {
                 console.error(GetTimestamp()+"Failed to retrieve device data from the website");
-                resolve(false);
-                return;
+                return resolve(false);                
             }
             
             data.data.devices.forEach(function(device) {
@@ -337,20 +333,19 @@ function UpdateDevices()
                 }
             });
 
-            resolve(true);
-            return;
+            return resolve(true);
+            
 
         });
-        
-    });
-    return;
+        return;        
+    });    
 }
 
 function AddDevice(device)
 {
     if(config.ignoredDevices.length > 0)
     {
-        if(config.ignoredDevices.indexOf(device.uuid) != -1) { return } 
+        if(config.ignoredDevices.indexOf(device.uuid) != -1) { return; } 
     }
 
     devices[device.uuid] = {
@@ -368,8 +363,8 @@ function AddDevice(device)
     if(!devices[device.uuid].instance) {devices[device.uuid].instance = "Unassigned"}
     if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
 
-    UpdateDeviceState(devices[device.uuid]);
-    return;
+    return UpdateDeviceState(devices[device.uuid]);
+    
 }
 
 function UpdateDevice(device)
@@ -391,8 +386,8 @@ function UpdateDevice(device)
     if(!devices[device.uuid].instance) {devices[device.uuid].instance = "Unassigned"}
     if(!devices[device.uuid].host) {devices[device.uuid].host = "Unknown"}
 
-    UpdateDeviceState(devices[device.uuid]);
-    return;
+    return UpdateDeviceState(devices[device.uuid]);
+    
 }
 
 function PostStatus()
@@ -414,16 +409,10 @@ function PostStatus()
 function PostDevices()
 {    
    
-    return new Promise(function(resolve) {   
-        if(!ready)
-        {
-            resolve(false);
-            return;
-        }     
+    return new Promise(function(resolve) {               
         if(!config.postIndividualDevices)
         {            
-            resolve(true);
-            return;
+            return resolve(true);            
         }
         else
         {    
@@ -446,23 +435,19 @@ function PostDevices()
                 console.log(GetTimestamp()+"Finished posting status");
                 setTimeout(PostDevices,postingDelay);
                 if(lastUpdatedMessage) { PostLastUpdated(); }
-                resolve(true);
-                return;
+                return resolve(true);
+                
             });
             
         }
+        return;
     });    
 }
 
 function PostGroupedDevices()
 {
     
-    return new Promise(function(resolve) {  
-        if(!ready)
-        {
-            resolve(false);
-            return;
-        }
+    return new Promise(function(resolve) {          
         if(config.postDeviceSummary)
         {  
             console.log(GetTimestamp()+"Posting device summary");
@@ -509,8 +494,7 @@ function PostGroupedDevices()
                         if(lastUpdatedMessage) { PostLastUpdated(); }
                         console.log(GetTimestamp()+"Finished posting device summary");
                         setTimeout(PostGroupedDevices, postingDelay);
-                        resolve(true);
-                        return;
+                        return resolve(true);                        
                     });
                 });
             });    
@@ -518,21 +502,14 @@ function PostGroupedDevices()
         }
         else
         {            
-            resolve(true);
-            return;
+            return resolve(true);           
         }
-        
+        return;
     });
 }
 
 function SendOfflineDeviceDMs()
 {
-    if(!ready)
-    {
-        return;
-    }   
-    
-
     let now = new Date();
     now = now.getTime();
 
@@ -575,8 +552,7 @@ function SendOfflineDeviceDMs()
 }
 
 function SendDMAlert(device)
-{
-    let now = new Date();
+{    
     for(var i = 0; i < config.userAlerts.length; i++)
     {
         let user = bot.users.get(config.userAlerts[i]);
@@ -595,8 +571,7 @@ function SendDMAlert(device)
 }
 
 function SendDeviceOnlineAlert(device)
-{
-    let now = new Date();
+{    
     for(var i = 0; i < config.userAlerts.length; i++)
     {
         let user = bot.users.get(config.userAlerts[i]);
@@ -639,21 +614,20 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
                 if(!message)
                 {
                     console.error(GetTimestamp()+"Missing device summary message");
-                    resolve(false);
-                    return;
+                    return resolve(false);                    
                 }
                 message.edit({embed: embed}).then(posted => {
-                    resolve(posted);
+                    return resolve(posted);
                 }).catch(console.error);
             });
         }
         else
         {
             channel.send({embed: embed}).then(posted => {            
-            resolve(posted);
-            return;
+            return resolve(posted);            
             }).catch(err => console.error("Error sending a message: "+err));
         }
+        return;
     });
 }
 
@@ -685,16 +659,10 @@ function GetDeviceString(deviceList)
 function PostInstances()
 {
     
-    return new Promise(function(resolve) {    
-        if(!ready)
-        {
-            resolve(false);
-            return;
-        }   
+    return new Promise(function(resolve) {            
         if(!config.postInstanceStatus)
         {            
-            resolve(true);
-            return;
+            return resolve(true);            
         }
         else
         {        
@@ -717,18 +685,17 @@ function PostInstances()
                 console.log(GetTimestamp()+"Finished posting instance status");
                 setTimeout(PostInstances,postingDelay);
                 if(lastUpdatedMessage) { PostLastUpdated(); }
-                resolve(true);                 
-                return;
+                return resolve(true);                                 
             });           
         }
+        return;
     });    
 }
 
 
 function PostLastUpdated()
 {
-    return new Promise(function(resolve) {
-        if(!ready) { resolve(false); return; }
+    return new Promise(function(resolve) {       
         let channel = config.deviceSummaryChannel ? bot.channels.get(config.deviceSummaryChannel) : bot.channels.get(config.channel);
         let now = new Date();
         let lastUpdated = "Last Updated at: **"+now.toLocaleString()+"**";
@@ -738,13 +705,11 @@ function PostLastUpdated()
             channel.fetchMessage(lastUpdatedMessage).then(message => {
                 if(!message)
                 {                    
-                    resolve(false);
-                    return;
+                    return resolve(false);                    
                 }
                 message.edit(lastUpdated).then(edited => {
                     lastUpdatedMessage = edited.id;
-                    resolve(true);
-                    return;
+                    return resolve(true);                    
                 }).catch(console.error);
 
             });
@@ -753,10 +718,10 @@ function PostLastUpdated()
         {
             channel.send(lastUpdated).then(message => {
                 lastUpdatedMessage = message.id;
-                resolve(true);
-                return;
+                return resolve(true);                
             }).catch(err => console.error("Error sending a message: "+err));
-        }        
+        }
+        return;        
     });
 }
 
@@ -767,9 +732,9 @@ function PostInstance(instance)
         let message = BuildInstanceEmbed(instance);        
         channel.send({'embed': message}).then(message => {
             instance.message = message.id;
-            resolve(true);
-            return;
+            return resolve(true);            
         }).catch(err => console.error("Error sending a message: "+err));
+        return;
     });
 }
 
@@ -781,15 +746,17 @@ function EditInstancePost(instance)
             if(!message)
                 {
                     console.error(GetTimestamp()+"Missing instance message");
-                    resolve(false);
-                    return;
+                    return resolve(false);                    
                 }
             let embed = BuildInstanceEmbed(instance);
             message.edit({'embed': embed}).then(edited => {
-                resolve(true);
-                return;
-            }).catch(console.error);
+                return resolve(true);                
+            }).catch((error) => {
+                console.error("Failed to edit an instance message: "+error);
+                return resolve(false);
+            });
         });
+        return;
     });
 }
 
@@ -801,15 +768,17 @@ function EditDevicePost(device)
             if(!message)
                 {
                     console.error(GetTimestamp()+"Missing device message");
-                    resolve(false);
-                    return;
+                    return resolve(false);                    
                 }
             let embed = BuildDeviceEmbed(device);
             message.edit({'embed': embed}).then(edited => {
-                resolve(true);
-                return;
-            }).catch(console.error);
+                return resolve(true);                
+            }).catch((error) => {
+                console.error("Failed to edit a device post: "+error);
+                return resolve(false);
+            });
         });
+        return;
     });
 }
 
@@ -820,9 +789,9 @@ function PostDevice(device)
         let message = BuildDeviceEmbed(device);
         channel.send({embed:message}).then(message => {
             device.message = message.id;
-            resolve(true);
-            return;
+            return resolve(true);            
         }).catch(err => console.error("Error sending a message: "+err));
+        return;
     });
 }
 
@@ -840,15 +809,19 @@ function BuildInstanceEmbed(instance)
     {
         case 'research':
         image = researchImage;
+        color = researchColor;
         break;
         case 'pokemon':
         image = pokemonImage;
+        color = pokemonColor;
         break;
         case 'raid':
         image = raidImage;
+        color = raidColor;
         break;
         case 'iv':
         image = ivImage;
+        color = ivColor;
         break;
         default:
         break;
@@ -923,11 +896,7 @@ function BuildDeviceEmbed(device)
         fields.push({'name':'Host', 'value':device.host, 'inline':true});
     }
     if(config.showBuildCount)
-    {
-        if(device.builds > 0)
-        {
-            let pause = true;
-        }
+    {    
         fields.push({'name':'Build Count', 'value':device.builds, 'inline':true});
     }
     if(config.showOnlineTime)
@@ -958,7 +927,7 @@ function ClearAllChannels()
 {
     
     return new Promise(function(resolve) {
-        if(!config.clearMessagesOnStartup || channelsCleared) { resolve(true); return; }
+        if(!config.clearMessagesOnStartup || channelsCleared) { return resolve(true); }
 
         let cleared = [];
 
@@ -969,8 +938,7 @@ function ClearAllChannels()
 
         Promise.all(cleared).then(done => {
             channelsCleared = true;
-            resolve(true);
-            return;
+            return resolve(true);            
         });
 
     });
@@ -980,26 +948,25 @@ function ClearMessages(channelID)
 {    
     return new Promise(function(resolve) {
     
-        if(channelsCleared) { resolve(true); return; }
+        if(channelsCleared) { return resolve(true); }
         let channel = bot.channels.get(channelID);
-        if(!channel) { resolve(false); console.error(GetTimestamp()+"Could not find a channel with ID: "+channelID); return;}
+        if(!channel) { console.error(GetTimestamp()+"Could not find a channel with ID: "+channelID); return resolve(false); }
         channel.fetchMessages({limit:99}).then(messages => {                
             channel.bulkDelete(messages).then(deleted => {
                 if(messages.size > 0)
                 {
                     ClearMessages(channelID).then(result => {
-                        resolve(true);
-                        return;
+                        return resolve(true);                        
                     });
                     
                 }
                 else
                 {
-                    resolve(true);
-                    return;
+                    return resolve(true);                    
                 }
             }).catch(console.error);
         });
+        return;
     });
 }
 
