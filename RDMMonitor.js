@@ -67,30 +67,29 @@ bot.on('ready', () => {
     
     
    
-    ClearAllChannels().then(result => {
-        UpdateStatusLoop().then(updated => {            
-            PostStatus();        
-        });
-    });
-
+    StartupSequence();      
+      
     return;
     
 });
 
-function UpdateStatusLoop()
+async function StartupSequence()
+{
+    await ClearAllChannels();
+    await UpdateStatusLoop();        
+    await PostStatus();  
+    return;
+}
+
+async function UpdateStatusLoop()
 {       
-    console.log(GetTimestamp()+"Beginning RDM query");
-    return new Promise(function(resolve) {        
-        UpdateDevices().then(updated => {
-            UpdateInstances().then(updated => {       
-                console.log(GetTimestamp()+"Finished RDM query");
-                setTimeout(UpdateStatusLoop, 5000);
-                return resolve(true);    
-                
-            });
-        });
-        return;
-    });
+    console.log(GetTimestamp()+"Beginning RDM query");    
+    await UpdateDevices();
+    await UpdateInstances();
+    console.log(GetTimestamp()+"Finished RDM query");
+    setTimeout(UpdateStatusLoop, 5000);
+    return;  
+
 }
 
 function UpdateInstances()
@@ -101,7 +100,7 @@ function UpdateInstances()
             if(err)
             {
                 console.error(GetTimestamp()+"Error querying RDM: "+err.code);
-                return resolve(false);                
+                return resolve();                
             }
         
             var data;
@@ -110,19 +109,19 @@ function UpdateInstances()
             } catch(err) {
                 console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
                 console.error(GetTimestamp()+err);
-                return resolve(false);                
+                return resolve();                
             }
 
             if(data.status=="error" || !data.data || !data)
             {
                 console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
-                return resolve(false);                
+                return resolve();                
             }
             
             if(!data.data.instances)
             {
                 console.error(GetTimestamp()+"Failed to retrieve instance data from the website");
-                return resolve(false);                
+                return resolve();                
             }
             
             data.data.instances.forEach(function(instance) {
@@ -135,7 +134,7 @@ function UpdateInstances()
                     UpdateInstance(instance);
                 }
             });    
-            return resolve(true);                     
+            return resolve();                     
         });             
     });
 }
@@ -297,7 +296,7 @@ function UpdateDevices()
             if(err)
             {
                 console.error(GetTimestamp()+"Error querying RDM: "+err.code);
-                return resolve(false);                
+                return resolve();                
             }
                     
             var data;
@@ -306,19 +305,19 @@ function UpdateDevices()
             } catch(err) {
                 console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
                 console.error(GetTimestamp()+err);
-                return resolve(false);                
+                return resolve();                
             }    
 
             if(data.status=="error" || !data.data)
             {
                 console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
-                return resolve(false);                
+                return resolve();                
             }
 
             if(!data.data.devices)
             {
                 console.error(GetTimestamp()+"Failed to retrieve device data from the website");
-                return resolve(false);                
+                return resolve();                
             }
             
             data.data.devices.forEach(function(device) {
@@ -331,7 +330,7 @@ function UpdateDevices()
                     UpdateDevice(device);
                 }
             });   
-            return resolve(true);   
+            return resolve();   
         });
              
     });    
@@ -388,59 +387,48 @@ function UpdateDevice(device)
 
 function PostStatus()
 {       
-    let posted = [];
-
-    posted.push(PostDevices());
-    posted.push(PostInstances());
-    posted.push(PostGroupedDevices());
-    SendOfflineDeviceDMs();
-    
-    Promise.all(posted).then(done => {        
-        PostLastUpdated();
-    });      
+    PostDevices();
+    PostInstances();
+    PostGroupedDevices();
+    SendOfflineDeviceDMs();   
+         
     return;      
     
 }
 
-function PostDevices()
-{    
-   
-    return new Promise(function(resolve) {               
-        if(!config.postIndividualDevices)
-        {            
-            return resolve(true);            
-        }
-        else
-        {    
-            console.log(GetTimestamp()+"Posting device status");          
-            let posts = [];
-            for(var deviceID in devices)
-            {
-                let device = devices[deviceID];
-                if(device.message)
-                {
-                    posts.push(EditDevicePost(device));
-                }
-                else
-                {
-                    posts.push(PostDevice(device));
-                }
+async function PostDevices()
+{             
+    if(!config.postIndividualDevices)
+    {            
+        return;            
+    }
+    else
+    {    
+        console.log(GetTimestamp()+"Posting device status"); 
+        for(var deviceID in devices)
+        {
+            let device = devices[deviceID];
+            if(device.message)
+            {                
+                await EditDevicePost(device);
+                await sleep(1000);
             }
-            
-            Promise.all(posts).then(finished => {     
-                console.log(GetTimestamp()+"Finished posting status");
-                setTimeout(PostDevices,postingDelay);
-                if(lastUpdatedMessage) { PostLastUpdated(); }
-                return resolve(true);
-                
-            });
-            
+            else
+            {                
+                await PostDevice(device);
+                await sleep(1000);
+            }
         }
-        return;
-    });    
+        
+       
+        console.log(GetTimestamp()+"Finished posting device status");
+        setTimeout(PostDevices,postingDelay);        
+        return;        
+    }    
+       
 }
 
-function PostGroupedDevices()
+async function PostGroupedDevices()
 {
     
     return new Promise(function(resolve) {          
@@ -487,10 +475,10 @@ function PostGroupedDevices()
                     PostDeviceGroup(offlineDevices, offlineColor, offlineImage, 'Offline Devices', offlineDeviceMessage).then(posted => {
                         offlineDeviceMessage = posted.id;
                         offlineDeviceList = offlineDevices;   
-                        if(lastUpdatedMessage) { PostLastUpdated(); }
+                        PostLastUpdated();
                         console.log(GetTimestamp()+"Finished posting device summary");
                         setTimeout(PostGroupedDevices, postingDelay);
-                        return resolve(true);                        
+                        return resolve();                        
                     });
                 });
             });    
@@ -498,7 +486,7 @@ function PostGroupedDevices()
         }
         else
         {            
-            return resolve(true);           
+            return resolve();           
         }        
     });
 }
@@ -610,13 +598,13 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
                 if(!message)
                 {
                     console.error(GetTimestamp()+"Missing device summary message");
-                    return resolve(false);                    
+                    return resolve();                    
                 }
                 message.edit({embed: embed}).then(posted => {
                     return resolve(posted);
                 }).catch(error => {
                     console.error(GetTimestamp()+"Failed to edit a post: "+error);
-                    return resolve(false);
+                    return resolve();
                 });
             });
         }
@@ -626,7 +614,7 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
             return resolve(posted);            
             }).catch(err => {
                 console.error(GetTimestamp()+"Error sending a message: "+err);
-                return resolve(false);
+                return resolve();
             });
         }        
     });
@@ -657,77 +645,77 @@ function GetDeviceString(deviceList)
     return currentString;
 }
 
-function PostInstances()
+async function PostInstances()
 {
-    
-    return new Promise(function(resolve) {            
-        if(!config.postInstanceStatus)
-        {            
-            return resolve(true);            
-        }
-        else
-        {        
-            console.log(GetTimestamp()+"Posting instance status"); 
-            let posts = [];
-            for(var instanceName in instances)
-            {
-                let instance = instances[instanceName];
-                if(instance.message)
-                {
-                    posts.push(EditInstancePost(instance));
-                }
-                else
-                {
-                    posts.push(PostInstance(instance));
-                }
-            }
 
-            Promise.all(posts).then(finished => {
-                console.log(GetTimestamp()+"Finished posting instance status");
-                setTimeout(PostInstances,postingDelay);
-                if(lastUpdatedMessage) { PostLastUpdated(); }
-                return resolve(true);                                 
-            });           
-        }        
-    });    
+    if(!config.postInstanceStatus)
+    {            
+        return resolve();            
+    }
+    else
+    {        
+        console.log(GetTimestamp()+"Posting instance status"); 
+        let posts = [];
+        for(var instanceName in instances)
+        {
+            let instance = instances[instanceName];
+            if(instance.message)
+            {
+                await EditInstancePost(instance);
+                await sleep(1000);
+            }
+            else
+            {
+                await PostInstance(instance);
+                await sleep(1000);
+            }
+        }
+
+        
+            console.log(GetTimestamp()+"Finished posting instance status");
+            setTimeout(PostInstances,postingDelay);                
+            return;                               
+                
+    }        
+       
 }
 
 
 function PostLastUpdated()
 {
-    return new Promise(function(resolve) {       
-        let channel = config.deviceSummaryChannel ? bot.channels.get(config.deviceSummaryChannel) : bot.channels.get(config.channel);
-        let now = new Date();
-        let lastUpdated = "Last Updated at: **"+now.toLocaleString()+"**";
+        
+    let channel = config.deviceSummaryChannel ? bot.channels.get(config.deviceSummaryChannel) : bot.channels.get(config.channel);
+    let now = new Date();
+    let lastUpdated = "Last Updated at: **"+now.toLocaleString()+"**";
 
-        if(lastUpdatedMessage)
-        {
-            channel.fetchMessage(lastUpdatedMessage).then(message => {
-                if(!message)
-                {                    
-                    return resolve(false);                    
-                }
-                message.edit(lastUpdated).then(edited => {
-                    lastUpdatedMessage = edited.id;
-                    return resolve(true);                    
-                }).catch(error => {
-                    console.log(GetTimestamp()+"Failed to edit a post: "+error);
-                    return resolve(false);
-                });
+    if(lastUpdatedMessage)
+    {
+        channel.fetchMessage(lastUpdatedMessage).then(message => {
+            if(!message)
+            {                    
+                return;                  
+            }
+            message.edit(lastUpdated).then(edited => {
+                lastUpdatedMessage = edited.id;
+                return;                    
+            }).catch(error => {
+                console.log(GetTimestamp()+"Failed to edit a post: "+error);
+                return;
+            });
 
-            });
-        }
-        else
-        {
-            channel.send(lastUpdated).then(message => {
-                lastUpdatedMessage = message.id;
-                return resolve(true);                
-            }).catch(err => {
-                console.error(GetTimestamp()+"Error sending a message: "+err);
-                return resolve(false);
-            });
-        }             
-    });
+        });
+    }
+    else
+    {
+        channel.send(lastUpdated).then(message => {
+            lastUpdatedMessage = message.id;
+            return;              
+        }).catch(err => {
+            console.error(GetTimestamp()+"Error sending a message: "+err);
+            return;
+        });
+    }             
+    
 }
 
 function PostInstance(instance)
@@ -737,10 +725,10 @@ function PostInstance(instance)
         let message = BuildInstanceEmbed(instance);        
         channel.send({'embed': message}).then(message => {
             instance.message = message.id;
-            return resolve(true);            
+            return resolve();            
         }).catch(err => {
             console.error(GetTimestamp()+"Error sending a message: "+err);
-            return resolve(false);
+            return resolve();
         });        
     });
 }
@@ -753,14 +741,14 @@ function EditInstancePost(instance)
             if(!message)
                 {
                     console.error(GetTimestamp()+"Missing instance message");
-                    return resolve(false);                    
+                    return resolve();                    
                 }
             let embed = BuildInstanceEmbed(instance);
             message.edit({'embed': embed}).then(edited => {
-                return resolve(true);                
+                return resolve();                
             }).catch((error) => {
                 console.error(GetTimestamp()+"Failed to edit an instance message: "+error);
-                return resolve(false);
+                return resolve();
             });
         });        
     });
@@ -774,14 +762,14 @@ function EditDevicePost(device)
             if(!message)
                 {
                     console.error(GetTimestamp()+"Missing device message");
-                    return resolve(false);                    
+                    return resolve();                    
                 }
             let embed = BuildDeviceEmbed(device);
             message.edit({'embed': embed}).then(edited => {
-                return resolve(true);                
+                return resolve();                
             }).catch((error) => {
                 console.error(GetTimestamp()+"Failed to edit a device post: "+error);
-                return resolve(false);
+                return resolve();
             });
         });        
     });
@@ -789,16 +777,16 @@ function EditDevicePost(device)
 
 function PostDevice(device)
 {
-    return new Promise(function(resolve) {
+    return new Promise(resolve => {        
         let channel = config.deviceStatusChannel ? bot.channels.get(config.deviceStatusChannel) : bot.channels.get(config.channel);
         let message = BuildDeviceEmbed(device);
         channel.send({embed:message}).then(message => {
             device.message = message.id;
-            return resolve(true);            
+            return resolve();           
         }).catch(err => {
             console.error(GetTimestamp()+"Error sending a message: "+err);
-            return resolve(false);
-        });        
+            return resolve();
+        });  
     });
 }
 
@@ -934,7 +922,7 @@ function ClearAllChannels()
 {
     
     return new Promise(function(resolve) {
-        if(!config.clearMessagesOnStartup || channelsCleared) { return resolve(true); }
+        if(!config.clearMessagesOnStartup || channelsCleared) { return resolve(); }
 
         let cleared = [];
 
@@ -945,7 +933,7 @@ function ClearAllChannels()
 
         Promise.all(cleared).then(done => {
             channelsCleared = true;
-            return resolve(true);            
+            return resolve();            
         });
 
     });
@@ -955,25 +943,25 @@ function ClearMessages(channelID)
 {    
     return new Promise(function(resolve) {
     
-        if(channelsCleared) { return resolve(true); }
+        if(channelsCleared) { return resolve(); }
         let channel = bot.channels.get(channelID);
-        if(!channel) { console.error(GetTimestamp()+"Could not find a channel with ID: "+channelID); return resolve(false); }
+        if(!channel) { console.error(GetTimestamp()+"Could not find a channel with ID: "+channelID); return resolve(); }
         channel.fetchMessages({limit:99}).then(messages => {                
             channel.bulkDelete(messages).then(deleted => {
                 if(messages.size > 0)
                 {
                     ClearMessages(channelID).then(result => {
-                        return resolve(true);                        
+                        return resolve();                        
                     });
                     
                 }
                 else
                 {
-                    return resolve(true);                    
+                    return resolve();                    
                 }
             }).catch(error => {
                 console.error(GetTimestamp()+"Failed to clear channel messages");
-                return resolve(false);
+                return resolve();
             });
         });        
     });
@@ -1102,3 +1090,10 @@ bot.on('disconnect', function(closed) {
     console.error(GetTimestamp()+'Disconnected from Discord'); 
     return;   
 });
+
+async function sleep(ms)
+{
+    return new Promise(resolve => {
+        setTimeout(resolve,ms);
+    });
+}
