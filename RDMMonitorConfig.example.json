@@ -32,5 +32,7 @@
 
     "warningTime": 1,
     "offlineTime": 15,
-    "rebuildTime": 0.25
+    "rebuildTime": 0.25,
+
+    "queueLimit": 5
 }

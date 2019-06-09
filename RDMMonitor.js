@@ -28,6 +28,8 @@ const ivColor = 0xDAA520;
 
 const DEVICE_QUERY = 'api/get_data?show_devices=true';
 const INSTANCE_QUERY = 'api/get_data?show_instances=true';
+const IV_QUERY = '/api/get_data?show_ivqueue=true&formatted=true&instance=';
+
 const WEBSITE_AUTH = {'auth': {'user':config.websiteLogin, 'password':config.websitePassword}, 'jar':true};
 
 var postingDelay = config.postingDelay * 60000;
@@ -124,14 +126,22 @@ function UpdateInstances()
                 return resolve();                
             }
             
-            data.data.instances.forEach(function(instance) {
+            data.data.instances.forEach(async function(instance) {
                 if(!instances[instance.name])
                 {
                     AddInstance(instance);
+                    if(instance.type == "Pokemon IV")
+                    {
+                        instances[instance.name].queue = await GetIVQueue(instance.name);                        
+                    }
                 }
                 else
                 {
                     UpdateInstance(instance);
+                    if(instance.type == "Pokemon IV")
+                    {
+                        instances[instance.name].queue = await GetIVQueue(instance.name);                        
+                    }
                 }
             });    
             return resolve();                     
@@ -223,7 +233,7 @@ function AddInstance(instance)
             'name':instance.name,
             'status':instance.status.scans_per_h+' Scans/H',
             'type':'raid'
-        }
+        }        
         break;
         default:
         return;
@@ -277,7 +287,7 @@ function UpdateInstance(instance)
             }
             break;
             case "Pokemon IV":
-            instances[instance.name].status = instance.status.iv_per_hour+' IV/H';            
+            instances[instance.name].status = instance.status.iv_per_hour+' IV/H';                       
             break;
             case "Circle Smart Raid":
             instances[instance.name].status = instance.status.scans_per_h+' Scans/H';            
@@ -671,7 +681,6 @@ async function PostInstances()
             }
         }
 
-        
             console.log(GetTimestamp()+"Finished posting instance status");
             setTimeout(PostInstances,postingDelay);                
             return;                               
@@ -837,6 +846,16 @@ function BuildInstanceEmbed(instance)
         {'name':'Device Count: ', 'value':deviceList.count, 'inline':true},
         {'name':'Device List: ', 'value':instanceDevices, 'inline':true}
     ];
+
+    if(instance.type == 'iv' && instance.queue)
+    {
+        fields = [
+            {'name':'Status', 'value':instance.status, 'inline':true},
+            {'name':'Device Count: ', 'value':deviceList.count, 'inline':true},
+            {'name':'Queue', 'value':instance.queue, 'inline':true},
+            {'name':'Device List: ', 'value':instanceDevices, 'inline':true}
+        ];
+    }
     let embed = {
         'title':instance.name,
         'color':color,
@@ -1095,5 +1114,36 @@ async function sleep(ms)
 {
     return new Promise(resolve => {
         setTimeout(resolve,ms);
+    });
+}
+
+function GetIVQueue(instanceName)
+{
+    let queueLimit = config.queueLimit ? config.queueLimit : 5;
+
+    return new Promise(function(resolve) {
+        if(config.queueLimit == 0) { return resolve(''); }
+        
+        request.get(config.url+IV_QUERY+instanceName, WEBSITE_AUTH, (err, res, body) => {
+
+            
+            let queue = '';
+            if(err)
+            {
+                console.error(GetTimestamp()+"Error querying RDM: "+err.code);
+                return resolve();                
+            }
+
+            let data = JSON.parse(body).data;
+            
+
+            for(var i = 0; i < data.ivqueue.length; i++)
+            {
+                queue += "Pokemon: **"+data.ivqueue[i].pokemon_name+"** Location: **"+data.ivqueue[i].location+"**\n";
+                if(i >= queueLimit - 1) { i = data.ivqueue.length; }                
+            }
+
+            return resolve(queue);
+        });
     });
 }
