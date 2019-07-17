@@ -78,7 +78,7 @@ bot.on('ready', () => {
 async function StartupSequence()
 {
     await ClearAllChannels();
-    await UpdateStatusLoop();        
+    await UpdateStatusLoop();          
     await PostStatus();  
     return;
 }
@@ -130,18 +130,11 @@ function UpdateInstances()
                 if(!instances[instance.name])
                 {
                     AddInstance(instance);
-                    if(instance.type == "Pokemon IV")
-                    {
-                        instances[instance.name].queue = await GetIVQueue(instance.name);                        
-                    }
+                    
                 }
                 else
                 {
-                    UpdateInstance(instance);
-                    if(instance.type == "Pokemon IV")
-                    {
-                        instances[instance.name].queue = await GetIVQueue(instance.name);                        
-                    }
+                    UpdateInstance(instance);                    
                 }
             });    
             return resolve();                     
@@ -149,7 +142,7 @@ function UpdateInstances()
     });
 }
 
-function AddInstance(instance)
+async function AddInstance(instance)
 {
     if(config.ignoredInstances.length > 0)
     {
@@ -225,7 +218,9 @@ function AddInstance(instance)
         instances[instance.name] = {
             'name':instance.name,
             'status':instance.status.iv_per_hour+' IV/H',
-            'type':'iv'
+            'type':'iv',            
+            'queue': await GetIVQueue(instance.name)                     
+                    
         }
         break;
         case "Circle Smart Raid":
@@ -241,7 +236,7 @@ function AddInstance(instance)
     return;
 }
 
-function UpdateInstance(instance)
+async function UpdateInstance(instance)
 {
     if(!instances[instance.name])
     {
@@ -287,7 +282,8 @@ function UpdateInstance(instance)
             }
             break;
             case "Pokemon IV":
-            instances[instance.name].status = instance.status.iv_per_hour+' IV/H';                       
+            instances[instance.name].status = instance.status.iv_per_hour+' IV/H';   
+            instances[instance.name].queue = await GetIVQueue(instance.name);                        
             break;
             case "Circle Smart Raid":
             instances[instance.name].status = instance.status.scans_per_h+' Scans/H';            
@@ -660,7 +656,7 @@ async function PostInstances()
 
     if(!config.postInstanceStatus)
     {            
-        return resolve();            
+        return;            
     }
     else
     {        
@@ -1123,6 +1119,8 @@ function GetIVQueue(instanceName)
 
     return new Promise(function(resolve) {
         if(config.queueLimit == 0) { return resolve(''); }
+
+        if(config.ignoredInstances.indexOf(instanceName) == -1) { return resolve(''); }
         
         request.get(config.url+IV_QUERY+instanceName, WEBSITE_AUTH, (err, res, body) => {
 
