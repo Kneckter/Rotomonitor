@@ -79,7 +79,8 @@ async function StartupSequence()
 {
     await ClearAllChannels();
     await UpdateStatusLoop();          
-    await PostStatus();  
+    await PostStatus();      
+
     return;
 }
 
@@ -88,7 +89,7 @@ async function UpdateStatusLoop()
     console.log(GetTimestamp()+"Beginning RDM query");    
     await UpdateDevices();
     await UpdateInstances();
-    console.log(GetTimestamp()+"Finished RDM query");
+    console.log(GetTimestamp()+"Finished RDM query");    
     setTimeout(UpdateStatusLoop, 5000);
     return;  
 
@@ -105,7 +106,7 @@ function UpdateInstances()
                 return resolve();                
             }
         
-            var data;
+            let data;
             try {
                 data = JSON.parse(body);
             } catch(err) {
@@ -305,7 +306,7 @@ function UpdateDevices()
                 return resolve();                
             }
                     
-            var data;
+            let data;
             try {
                 data = JSON.parse(body);
             } catch(err) {
@@ -411,7 +412,7 @@ async function PostDevices()
     else
     {    
         console.log(GetTimestamp()+"Posting device status"); 
-        for(var deviceID in devices)
+        for(let deviceID in devices)
         {
             let device = devices[deviceID];
             if(device.message)
@@ -448,7 +449,7 @@ async function PostGroupedDevices()
             let warnDevices = []; 
             let offlineDevices = [];
 
-            for(var deviceName in devices)
+            for(let deviceName in devices)
             {
                 let device = devices[deviceName];
                 let lastSeen = new Date(0);
@@ -504,7 +505,7 @@ function SendOfflineDeviceDMs()
 
     let offlineDevices = [];
 
-    for(var deviceName in devices)
+    for(let deviceName in devices)
     {
         let device = devices[deviceName];
         let lastSeen = new Date(0);
@@ -517,7 +518,7 @@ function SendOfflineDeviceDMs()
         }
     }
 
-    for(var i = 0; i < offlineDevices.length; i++)
+    for(let i = 0; i < offlineDevices.length; i++)
     {
         if(!devices[offlineDevices[i]].alerted)
         {
@@ -526,7 +527,7 @@ function SendOfflineDeviceDMs()
         }
     }
 
-    for(var deviceName in devices)
+    for(let deviceName in devices)
     {
         if(devices[deviceName].alerted && offlineDevices.indexOf(deviceName) == -1)
         {
@@ -542,7 +543,7 @@ function SendOfflineDeviceDMs()
 
 function SendDMAlert(device)
 {    
-    for(var i = 0; i < config.userAlerts.length; i++)
+    for(let i = 0; i < config.userAlerts.length; i++)
     {
         let user = bot.users.get(config.userAlerts[i]);
         if(!user)
@@ -562,7 +563,7 @@ function SendDMAlert(device)
 
 function SendDeviceOnlineAlert(device)
 {    
-    for(var i = 0; i < config.userAlerts.length; i++)
+    for(let i = 0; i < config.userAlerts.length; i++)
     {
         let user = bot.users.get(config.userAlerts[i]);
         if(!user)
@@ -631,7 +632,7 @@ function GetDeviceString(deviceList)
     
     let currentString = "";
 
-    for(var i = 0; i < deviceList.length; i++)
+    for(let i = 0; i < deviceList.length; i++)
     {
         if(currentString.length + deviceList[i].length + 2 > 2000)
         {
@@ -662,7 +663,7 @@ async function PostInstances()
     {        
         console.log(GetTimestamp()+"Posting instance status"); 
         let posts = [];
-        for(var instanceName in instances)
+        for(let instanceName in instances)
         {
             let instance = instances[instanceName];
             if(instance.message)
@@ -987,7 +988,7 @@ function GetDeviceList(instance)
     let count = 0;
     let deviceList = [];
 
-    for(var deviceID in devices)
+    for(let deviceID in devices)
     {
         let device = devices[deviceID];
         if(device.instance===instance.name) { count++; deviceList.push(deviceID); }
@@ -1050,7 +1051,7 @@ function UpdateDeviceState(device)
 
 function PrecisionRound(number, precision) 
 {
-	var factor = Math.pow(10, precision);
+	let factor = Math.pow(10, precision);
 	return Math.round(number * factor) / factor;
 }
 
@@ -1106,7 +1107,7 @@ bot.on('disconnect', function(closed) {
     return;   
 });
 
-async function sleep(ms)
+function sleep(ms)
 {
     return new Promise(resolve => {
         setTimeout(resolve,ms);
@@ -1135,7 +1136,7 @@ function GetIVQueue(instanceName)
             let data = JSON.parse(body).data;
             
 
-            for(var i = 0; i < data.ivqueue.length; i++)
+            for(let i = 0; i < data.ivqueue.length; i++)
             {
                 queue += "Pokemon: **"+data.ivqueue[i].pokemon_name+"** Location: **"+data.ivqueue[i].location+"**\n";
                 if(i >= queueLimit - 1) { i = data.ivqueue.length; }                
