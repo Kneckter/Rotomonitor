@@ -54,7 +54,8 @@ bot.on('message', message => {
 		case config.deviceSummaryChannel:
 			if(message.content == 'restart'){ RestartBot('manual'); } break;
 		default: return;
-	}
+    }
+    return;
 });
 
 bot.on('ready', () => {
