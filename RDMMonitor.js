@@ -928,10 +928,10 @@ function ClearAllChannels()
 
         let cleared = [];
 
-        cleared.push(ClearMessages(config.channel));
-        cleared.push(ClearMessages(config.deviceStatusChannel));
-        cleared.push(ClearMessages(config.instanceStatusChannel));
-        cleared.push(ClearMessages(config.deviceSummaryChannel));        
+        if(config.channel) { cleared.push(ClearMessages(config.channel));}
+        if(config.channel) { cleared.push(ClearMessages(config.deviceStatusChannel));}
+        if(config.channel) { cleared.push(ClearMessages(config.instanceStatusChannel));}
+        if(config.channel) { cleared.push(ClearMessages(config.deviceSummaryChannel));}     
 
         Promise.all(cleared).then(done => {
             channelsCleared = true;
