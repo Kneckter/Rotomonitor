@@ -60,6 +60,7 @@ bot.on('message', message => {
 
 bot.on('ready', () => {
     
+
     if(config.warningTime > 1000 || config.offlineTime > 1000)
     {
         console.log(GetTimestamp()+"WARNING warningTime and offlineTime should be in MINUTES not milliseconds");
@@ -131,12 +132,12 @@ function UpdateInstances()
             data.data.instances.forEach(async function(instance) {
                 if(!instances[instance.name])
                 {
-                    AddInstance(instance);
+                    await AddInstance(instance);
                     
                 }
                 else
                 {
-                    UpdateInstance(instance);                    
+                    await UpdateInstance(instance);                    
                 }
             });    
             return resolve();                     
@@ -328,14 +329,14 @@ function UpdateDevices()
                 return resolve();                
             }
             
-            data.data.devices.forEach(function(device) {
+            data.data.devices.forEach(async function(device) {
                 if(!devices[device.uuid])
                 {
-                    AddDevice(device);
+                    await AddDevice(device);
                 }
                 else
                 {
-                    UpdateDevice(device);
+                    await UpdateDevice(device);
                 }
             });   
             return resolve();   
@@ -393,12 +394,12 @@ function UpdateDevice(device)
     
 }
 
-function PostStatus()
+async function PostStatus()
 {       
-    PostDevices();
-    PostInstances();
-    PostGroupedDevices();
-    SendOfflineDeviceDMs();   
+    await PostDevices();
+    await PostInstances();
+    await PostGroupedDevices();
+    await SendOfflineDeviceDMs();   
          
     return;      
     
@@ -439,7 +440,7 @@ async function PostDevices()
 async function PostGroupedDevices()
 {
     
-    return new Promise(function(resolve) {          
+    return new Promise(async function(resolve) {          
         if(config.postDeviceSummary)
         {  
             console.log(GetTimestamp()+"Posting device summary");
@@ -542,11 +543,11 @@ function SendOfflineDeviceDMs()
     
 }
 
-function SendDMAlert(device)
+async function SendDMAlert(device)
 {    
     for(let i = 0; i < config.userAlerts.length; i++)
     {
-        let user = bot.users.get(config.userAlerts[i]);
+        let user = await bot.users.fetch(config.userAlerts[i]);
         if(!user)
         {
             console.error(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
@@ -562,11 +563,11 @@ function SendDMAlert(device)
     return;
 }
 
-function SendDeviceOnlineAlert(device)
+async function SendDeviceOnlineAlert(device)
 {    
     for(let i = 0; i < config.userAlerts.length; i++)
     {
-        let user = bot.users.get(config.userAlerts[i]);
+        let user = bot.users.fetch(config.userAlerts[i]);
         if(!user)
         {
             console.error(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
@@ -585,36 +586,34 @@ function SendDeviceOnlineAlert(device)
 function PostDeviceGroup(deviceList, color, image, title, messageID)
 {
 
-    return new Promise(function(resolve) {
-        let channel = config.deviceSummaryChannel ? bot.channels.get(config.deviceSummaryChannel) : bot.channels.get(config.channel);
+    return new Promise(async function(resolve) {
+        let channel = config.deviceSummaryChannel ? config.deviceSummaryChannel : config.channel;
+        channel = await bot.channels.fetch(channel);
 
         let deviceString = GetDeviceString(deviceList);
-        
-
-        let embed = {
-            'title':title,
-            'color':color,
-            'thumbnail': {'url':image},
-            'description': deviceString
-        }
-        
     
+        let embed = new Discord.MessageEmbed();
+
+        embed.setTitle(title);
+        embed.setColor(color);
+        embed.setThumbnail(image);
+        embed.setDescription(deviceString);
 
         if(messageID)
         {
-            channel.fetchMessage(messageID).then(message => {
-                if(!message)
-                {
-                    console.error(GetTimestamp()+"Missing device summary message");
-                    return resolve();                    
-                }
-                message.edit({embed: embed}).then(posted => {
-                    return resolve(posted);
-                }).catch(error => {
-                    console.error(GetTimestamp()+"Failed to edit a post: "+error);
-                    return resolve();
-                });
+            let message = await channel.messages.fetch(messageID);
+            if(!message)
+            {
+                console.error(GetTimestamp()+"Missing device summary message");
+                return resolve();                    
+            }
+            message.edit({embed: embed}).then(posted => {
+                return resolve(posted);
+            }).catch(error => {
+                console.error(GetTimestamp()+"Failed to edit a post: "+error);
+                return resolve();
             });
+            ;
         }
         else
         {
@@ -688,29 +687,28 @@ async function PostInstances()
 }
 
 
-function PostLastUpdated()
+async function PostLastUpdated()
 {
         
-    let channel = config.deviceSummaryChannel ? bot.channels.get(config.deviceSummaryChannel) : bot.channels.get(config.channel);
+    let channel = config.deviceSummaryChannel ? config.deviceSummaryChannel : config.channel;
+    channel = await bot.channels.fetch(channel);
     let now = new Date();
     let lastUpdated = "Last Updated at: **"+now.toLocaleString()+"**";
 
     if(lastUpdatedMessage)
     {
-        channel.fetchMessage(lastUpdatedMessage).then(message => {
-            if(!message)
-            {                    
-                return;                  
-            }
-            message.edit(lastUpdated).then(edited => {
-                lastUpdatedMessage = edited.id;
-                return;                    
-            }).catch(error => {
-                console.log(GetTimestamp()+"Failed to edit a post: "+error);
-                return;
-            });
-
-        });
+        let message = await channel.messages.fetch(lastUpdatedMessage);
+        if(!message)
+        {                    
+            return;                  
+        }
+        message.edit(lastUpdated).then(edited => {
+            lastUpdatedMessage = edited.id;
+            return;                    
+        }).catch(error => {
+            console.log(GetTimestamp()+"Failed to edit a post: "+error);
+            return;
+        });        
     }
     else
     {
@@ -727,78 +725,76 @@ function PostLastUpdated()
 
 function PostInstance(instance)
 {
-    return new Promise(function(resolve) {
-        let channel = config.instanceStatusChannel ? bot.channels.get(config.instanceStatusChannel) : bot.channels.get(config.channel);
-        let message = BuildInstanceEmbed(instance);        
-        channel.send({'embed': message}).then(message => {
-            instance.message = message.id;
-            return resolve();            
-        }).catch(err => {
-            console.error(GetTimestamp()+"Error sending a message: "+err);
-            return resolve();
-        });        
+    return new Promise(async function(resolve) {
+        let channel = config.instanceStatusChannel ? config.instanceStatusChannel : config.channel;
+        channel = await bot.channels.fetch(channel);
+        let embed = BuildInstanceEmbed(instance);        
+        let message = await channel.send({'embed': embed});
+        instance.message = message.id;
+        return resolve(true);
+                   
     });
 }
 
 function EditInstancePost(instance)
 {
-    return new Promise(function(resolve) {
-        let channel = config.instanceStatusChannel ? bot.channels.get(config.instanceStatusChannel) : bot.channels.get(config.channel);
-        channel.fetchMessage(instance.message).then(message => {
-            if(!message)
-                {
-                    console.error(GetTimestamp()+"Missing instance message");
-                    return resolve();                    
-                }
-            let embed = BuildInstanceEmbed(instance);
-            message.edit({'embed': embed}).then(edited => {
-                return resolve();                
-            }).catch((error) => {
-                console.error(GetTimestamp()+"Failed to edit an instance message: "+error);
-                return resolve();
-            });
-        });        
-    });
+    return new Promise(async function(resolve) {
+        let channel = config.instanceStatusChannel ? config.instanceStatusChannel : config.channel;
+        channel = await bot.channels.fetch(channel);
+        let message = await channel.messages.fetch(instance.message);
+        if(!message)
+            {
+                console.error(GetTimestamp()+"Missing instance message");
+                return resolve();                    
+            }
+        let embed = BuildInstanceEmbed(instance);
+        message.edit({'embed': embed}).then(edited => {
+            return resolve();                
+        }).catch((error) => {
+            console.error(GetTimestamp()+"Failed to edit an instance message: "+error);
+            return resolve();
+        });
+    });        
+    
 }
 
 function EditDevicePost(device)
 {
-    return new Promise(function(resolve) {
-        let channel = config.deviceStatusChannel ? bot.channels.get(config.deviceStatusChannel) : bot.channels.get(config.channel);
-        channel.fetchMessage(device.message).then(message => {
-            if(!message)
-                {
-                    console.error(GetTimestamp()+"Missing device message");
-                    return resolve();                    
-                }
-            let embed = BuildDeviceEmbed(device);
-            message.edit({'embed': embed}).then(edited => {
-                return resolve();                
-            }).catch((error) => {
-                console.error(GetTimestamp()+"Failed to edit a device post: "+error);
-                return resolve();
-            });
-        });        
+    return new Promise(async function(resolve) {
+        let channel = config.deviceStatusChannel ? config.deviceStatusChannel :config.channel;
+        channel = await bot.channels.fetch(channel);
+        let message = await channel.messages.fetch(device.message);
+        if(!message)
+            {
+                console.error(GetTimestamp()+"Missing device message");
+                return resolve();                    
+            }
+        let embed = BuildDeviceEmbed(device);
+        message.edit({'embed': embed}).then(edited => {
+            return resolve();                
+        }).catch((error) => {
+            console.error(GetTimestamp()+"Failed to edit a device post: "+error);
+            return resolve();
+        });
+             
     });
 }
 
 function PostDevice(device)
 {
-    return new Promise(resolve => {        
-        let channel = config.deviceStatusChannel ? bot.channels.get(config.deviceStatusChannel) : bot.channels.get(config.channel);
+    return new Promise(async function(resolve){        
+        let channel = config.deviceStatusChannel ? config.deviceStatusChannel : config.channel;
+        channel = await bot.channels.fetch(channel);
         let message = BuildDeviceEmbed(device);
-        channel.send({embed:message}).then(message => {
-            device.message = message.id;
-            return resolve();           
-        }).catch(err => {
-            console.error(GetTimestamp()+"Error sending a message: "+err);
-            return resolve();
-        });  
+        let sent = await channel.send({embed:message});
+        device.message = sent.id;
+        return resolve(); 
     });
 }
 
 function BuildInstanceEmbed(instance)
 {
+    let embed = new Discord.MessageEmbed();
     let deviceList = GetDeviceList(instance);
 
     let color = 0x0000FF;    
@@ -839,36 +835,27 @@ function BuildInstanceEmbed(instance)
         instanceDevices = "None";
     }
 
-    let fields = [
-        {'name':'Status', 'value':instance.status, 'inline':true},
-        {'name':'Device Count: ', 'value':deviceList.count, 'inline':true},
-        {'name':'Device List: ', 'value':instanceDevices, 'inline':true}
-    ];
+    embed.addField('Status',instance.status,true);
+    embed.addField('Device Count: ',deviceList.count,true);
+    embed.addField('Deivce List: ',instanceDevices,true);
+   
 
     if(instance.type == 'iv' && instance.queue)
     {
-        fields = [
-            {'name':'Status', 'value':instance.status, 'inline':true},
-            {'name':'Device Count: ', 'value':deviceList.count, 'inline':true},
-            {'name':'Queue', 'value':instance.queue, 'inline':true},
-            {'name':'Device List: ', 'value':instanceDevices, 'inline':true}
-        ];
-    }
-    let embed = {
-        'title':instance.name,
-        'color':color,
-        'fields': fields,
-        'thumbnail': {url: image},
-        'footer': {'text':'Last Updated: '+now.toLocaleString() }
-
-    }
+        embed.addField('Queue', instance.queue, true);
+    }    
+    embed.setTitle(instance.name);
+    embed.setColor(color);
+    embed.setThumbnail(image);
+    embed.setFooter('Last Updated: '+now.toLocaleString());
 
     return embed;
 }
 
 function BuildDeviceEmbed(device)
 {
-    let fields = [];
+    let embed = new Discord.MessageEmbed();
+    
 
     let color = okColor;
     let image = okImage;
@@ -881,7 +868,7 @@ function BuildDeviceEmbed(device)
         
         let lastSeen = new Date(0);
         lastSeen.setUTCSeconds(device.lastSeen);
-        fields.push({'name':'Last Seen: ', 'value': lastSeen.toLocaleString(), 'inline':true});
+        embed.addField('Last Seen: ',lastSeen.toLocaleString(),true);
           
         let lastSeenDifference = now - lastSeen.getTime();
         if(lastSeenDifference > warningTime)
@@ -897,19 +884,19 @@ function BuildDeviceEmbed(device)
     }
     if(config.showInstance)
     {
-        fields.push({'name':'Instance', 'value':device.instance, 'inline':true});
+        embed.addField('Instance',device.instance,true);
     }
     if(config.showAccount)
-    {        
-        fields.push({'name':'Account', 'value':device.account, 'inline':true});
+    { 
+        embed.addField('Account',device.account,true);
     }
     if(config.showHost)
     {
-        fields.push({'name':'Host', 'value':device.host, 'inline':true});
+        embed.addField('Host',device.host,true);
     }
     if(config.showBuildCount)
     {    
-        fields.push({'name':'Build Count', 'value':device.builds, 'inline':true});
+        embed.addField('Build Count',device.builds,true);
     }
     if(config.showOnlineTime)
     {
@@ -919,20 +906,18 @@ function BuildDeviceEmbed(device)
             currentUptime = (now - device.lastBuildTimestamp) / 1000;
         }
 
-        fields.push({'name':'Current Uptime', 'value':currentUptime + 's', 'inline':true});
-        fields.push({'name':'Last Build', 'value':device.lastBuild, 'inline':true});
-    }
+        embed.addField('Current Uptime',currentUptime+'s',true);
+        embed.addField('Last Build',device.lastBuild,true);
+    }   
+
    
 
-    let embedMSG = {
-        'title': device.name,
-        'color': color,
-        'thumbnail': {url: image},
-        'fields':fields,
-        'footer': {'text':'Last Updated: '+new Date().toLocaleString() }
-    };
+    embed.setColor(color);
+    embed.setThumbnail(image);
+    embed.setTitle(device.name);
+    embed.setFooter('Last Updated: '+new Date().toLocaleString());    
 
-    return embedMSG;
+    return embed;
 }
 
 function ClearAllChannels()
@@ -958,29 +943,22 @@ function ClearAllChannels()
 
 function ClearMessages(channelID)
 {    
-    return new Promise(function(resolve) {
+    return new Promise(async function(resolve) {
     
         if(channelsCleared) { return resolve(); }
-        let channel = bot.channels.get(channelID);
+        let channel = await bot.channels.fetch(channelID);
         if(!channel) { console.error(GetTimestamp()+"Could not find a channel with ID: "+channelID); return resolve(); }
-        channel.fetchMessages({limit:99}).then(messages => {                
-            channel.bulkDelete(messages).then(deleted => {
-                if(messages.size > 0)
-                {
-                    ClearMessages(channelID).then(result => {
-                        return resolve();                        
-                    });
-                    
-                }
-                else
-                {
-                    return resolve();                    
-                }
-            }).catch(error => {
-                console.error(GetTimestamp()+"Failed to clear channel messages");
-                return resolve();
-            });
-        });        
+        let messages = await channel.bulkDelete(100,true);
+        let pause = true;
+        if(messages.size > 0)
+        {
+            await ClearMessages(channelID);
+                return resolve(true);  
+        }
+        else
+        {
+            return resolve(true);                    
+        }            
     });
 }
 
