@@ -567,7 +567,7 @@ async function SendDeviceOnlineAlert(device)
 {    
     for(let i = 0; i < config.userAlerts.length; i++)
     {
-        let user = bot.users.fetch(config.userAlerts[i]);
+        let user = await bot.users.fetch(config.userAlerts[i]);
         if(!user)
         {
             console.error(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
