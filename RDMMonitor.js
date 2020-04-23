@@ -949,7 +949,6 @@ function ClearMessages(channelID)
         let channel = await bot.channels.fetch(channelID);
         if(!channel) { console.error(GetTimestamp()+"Could not find a channel with ID: "+channelID); return resolve(); }
         let messages = await channel.bulkDelete(100,true);
-        let pause = true;
         if(messages.size > 0)
         {
             await ClearMessages(channelID);
