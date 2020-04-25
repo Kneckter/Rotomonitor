@@ -46,7 +46,7 @@ Login();
 
 function Login(){
 
-    console.log("Logging in bot");
+    console.log(GetTimestamp()+"Logging in Discord bot token");
     bot.login(config.token);
 
 }
@@ -66,7 +66,7 @@ bot.on('message', message => {
 
 bot.on('ready', () => {
     
-    console.log("Bot logged in and ready");
+    console.log(GetTimestamp()+"Discord bot logged in and ready");
 
     if(config.warningTime > 1000 || config.offlineTime > 1000)
     {
@@ -935,14 +935,14 @@ function ClearAllChannels()
 
         let cleared = [];
 
-        if(config.channel) { cleared.push(ClearMessages(config.channel)); console.log("Clearing channel ID: "+config.channel); }
-        if(config.deviceStatusChannel) { cleared.push(ClearMessages(config.deviceStatusChannel)); console.log("Clearing channel ID: "+config.deviceStatusChannel); }
-        if(config.instanceStatusChannel) { cleared.push(ClearMessages(config.instanceStatusChannel)); console.log("Clearing channel ID: "+config.instanceStatusChannel); }
-        if(config.deviceSummaryChannel) { cleared.push(ClearMessages(config.deviceSummaryChannel)); console.log("Clearing channel ID: "+config.deviceSummaryChannel); }     
+        if(config.channel) { cleared.push(ClearMessages(config.channel)); console.log(GetTimestamp()+"Clearing channel ID: "+config.channel); }
+        if(config.deviceStatusChannel) { cleared.push(ClearMessages(config.deviceStatusChannel)); console.log(GetTimestamp()+"Clearing channel ID: "+config.deviceStatusChannel); }
+        if(config.instanceStatusChannel) { cleared.push(ClearMessages(config.instanceStatusChannel)); console.log(GetTimestamp()+"Clearing channel ID: "+config.instanceStatusChannel); }
+        if(config.deviceSummaryChannel) { cleared.push(ClearMessages(config.deviceSummaryChannel)); console.log(GetTimestamp()+"Clearing channel ID: "+config.deviceSummaryChannel); }     
 
         Promise.all(cleared).then(done => {
             channelsCleared = true;
-            console.log("All channels cleared");
+            console.log(GetTimestamp()+"All channels cleared");
             return resolve();            
         });
 
