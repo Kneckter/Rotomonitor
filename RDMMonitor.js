@@ -42,9 +42,15 @@ var offlineDeviceMessage = "";
 var lastUpdatedMessage = "";
 var channelsCleared = false;
 
+Login();
 
+function Login(){
 
-bot.login(config.token);
+    console.log("Logging in bot");
+    bot.login(config.token);
+
+}
+
 
 bot.on('message', message => {
 	switch(message.channel.id){
@@ -60,6 +66,7 @@ bot.on('message', message => {
 
 bot.on('ready', () => {
     
+    console.log("Bot logged in and ready");
 
     if(config.warningTime > 1000 || config.offlineTime > 1000)
     {
@@ -928,13 +935,14 @@ function ClearAllChannels()
 
         let cleared = [];
 
-        if(config.channel) { cleared.push(ClearMessages(config.channel));}
-        if(config.deviceStatusChannel) { cleared.push(ClearMessages(config.deviceStatusChannel));}
-        if(config.instanceStatusChannel) { cleared.push(ClearMessages(config.instanceStatusChannel));}
-        if(config.deviceSummaryChannel) { cleared.push(ClearMessages(config.deviceSummaryChannel));}     
+        if(config.channel) { cleared.push(ClearMessages(config.channel)); console.log("Clearing channel ID: "+config.channel); }
+        if(config.deviceStatusChannel) { cleared.push(ClearMessages(config.deviceStatusChannel)); console.log("Clearing channel ID: "+config.deviceStatusChannel); }
+        if(config.instanceStatusChannel) { cleared.push(ClearMessages(config.instanceStatusChannel)); console.log("Clearing channel ID: "+config.instanceStatusChannel); }
+        if(config.deviceSummaryChannel) { cleared.push(ClearMessages(config.deviceSummaryChannel)); console.log("Clearing channel ID: "+config.deviceSummaryChannel); }     
 
         Promise.all(cleared).then(done => {
             channelsCleared = true;
+            console.log("All channels cleared");
             return resolve();            
         });
 
@@ -956,6 +964,7 @@ function ClearMessages(channelID)
         }
         else
         {
+            console.log("Finished clearing channel ID: "+channelID);
             return resolve(true);                    
         }            
     });
