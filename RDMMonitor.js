@@ -44,10 +44,21 @@ var channelsCleared = false;
 
 Login();
 
-function Login(){
+function Login(){    
+    let version = Discord.version;
+    version = version.split('.');
+    let primaryVersion = Number(version[0]);
+    if(primaryVersion < 12)
+    {
+        console.log(GetTimestamp()+"FATAL ERROR: discord.js version must be 12.0 or newer, you are using: "+Discord.version);
+        console.log(GetTimestamp()+"Bot will not continue at this point, please upgrade discord.js, also requires node version 12 or newer");
 
-    console.log(GetTimestamp()+"Logging in Discord bot token");
-    bot.login(config.token);
+    }
+    else
+    {
+        console.log(GetTimestamp()+"Logging in Discord bot token");
+        bot.login(config.token);
+    }
 
 }
 
