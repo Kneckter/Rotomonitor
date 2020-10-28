@@ -13,18 +13,18 @@
     "websitePassword": "password",
 
     "postIndividualDevices":true,
-    "postInstanceStatus":true,  
+    "postInstanceStatus":true,
     "postDeviceSummary":true,
 
     "showInstance": true,
     "showAccount": true,
     "showHost": true,
-    "showLastSeen": true,  
+    "showLastSeen": true,
     "showBuildCount": true,
     "showOnlineTime": true,
 
-    "clearMessagesOnStartup": true,  
-    
+    "clearMessagesOnStartup": true,
+
     "ignoredDevices": [],
     "ignoredInstances": [],
 
@@ -33,7 +33,7 @@
     "warningTime": 1,
     "offlineTime": 15,
     "rebuildTime": 0.25,
-    
+
     "queueLimit": 5,
 
     "allowWarningReboots": true,

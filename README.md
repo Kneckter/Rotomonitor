@@ -38,8 +38,8 @@ showOnlineTime: Show how long the deviceThe ttThe ttThe tt has been online
 
 clearMessagesOnStartup: Will delete all messages in the channel it is going to post to, this is to clear out posts from past history, DO NOT set this to true if you don't have a dedicated channel for device status as this will wipe out the channel
 
-ignoredDevices: 
-ignoredInstances: 
+ignoredDevices:
+ignoredInstances:
 
 pollingDelay: Delay in minutes in between checking device/instance status.  A value of 0 would check immediately after it finishes checking/posting status, .5 would be 30 seconds, 1 would be 60 seconds, etc...
 
