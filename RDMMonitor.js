@@ -62,7 +62,6 @@ function Login(){
 
 }
 
-
 bot.on('message', message => {
 	switch(message.channel.id){
 		case config.channel:
@@ -118,48 +117,55 @@ async function UpdateStatusLoop()
 function UpdateInstances()
 {    
     return new Promise(function(resolve) {
-        request.get(config.url+INSTANCE_QUERY, WEBSITE_AUTH, (err, res, body) => {
+        if(!config.postInstanceStatus)
+        {
+            return resolve();
+        }
+        else
+        {
+            request.get(config.url+INSTANCE_QUERY, WEBSITE_AUTH, (err, res, body) => {
 
-            if(err)
-            {
-                console.error(GetTimestamp()+"Error querying RDM: "+err.code);
-                return resolve();                
-            }
-        
-            let data;
-            try {
-                data = JSON.parse(body);
-            } catch(err) {
-                console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
-                console.error(GetTimestamp()+err);
-                return resolve();                
-            }
+                if(err)
+                {
+                    console.error(GetTimestamp()+"Error querying RDM: "+err.code);
+                    return resolve();                
+                }
 
-            if(data.status=="error" || !data.data || !data)
-            {
-                console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
-                return resolve();                
-            }
-            
-            if(!data.data.instances)
-            {
-                console.error(GetTimestamp()+"Failed to retrieve instance data from the website");
-                return resolve();                
-            }
-            
-            data.data.instances.forEach(async function(instance) {
-                if(!instances[instance.name])
-                {
-                    await AddInstance(instance);
-                    
+                let data;
+                try {
+                    data = JSON.parse(body);
+                } catch(err) {
+                    console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
+                    console.error(GetTimestamp()+err);
+                    return resolve();                
                 }
-                else
+
+                if(data.status=="error" || !data.data || !data)
                 {
-                    await UpdateInstance(instance);                    
+                    console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
+                    return resolve();                
                 }
-            });    
-            return resolve();                     
-        });             
+
+                if(!data.data.instances)
+                {
+                    console.error(GetTimestamp()+"Failed to retrieve instance data from the website");
+                    return resolve();                
+                }
+
+                data.data.instances.forEach(async function(instance) {
+                    if(!instances[instance.name])
+                    {
+                        await AddInstance(instance);
+
+                    }
+                    else
+                    {
+                        await UpdateInstance(instance);                    
+                    }
+                });    
+                return resolve();                     
+            });             
+        }
     });
 }
 
@@ -318,48 +324,54 @@ async function UpdateInstance(instance)
 function UpdateDevices()
 {
     return new Promise(function(resolve) {
-        request.get(config.url+DEVICE_QUERY, WEBSITE_AUTH, (err, res, body) => {
+        if(!config.postIndividualDevices && !config.postDeviceSummary)
+        {
+            return resolve(true);
+        }
+        else
+        {
+            request.get(config.url+DEVICE_QUERY, WEBSITE_AUTH, (err, res, body) => {
 
-            if(err)
-            {
-                console.error(GetTimestamp()+"Error querying RDM: "+err.code);
-                return resolve();                
-            }
-                    
-            let data;
-            try {
-                data = JSON.parse(body);
-            } catch(err) {
-                console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
-                console.error(GetTimestamp()+err);
-                return resolve();                
-            }    
-
-            if(data.status=="error" || !data.data)
-            {
-                console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
-                return resolve();                
-            }
-
-            if(!data.data.devices)
-            {
-                console.error(GetTimestamp()+"Failed to retrieve device data from the website");
-                return resolve();                
-            }
-            
-            data.data.devices.forEach(async function(device) {
-                if(!devices[device.uuid])
+                if(err)
                 {
-                    await AddDevice(device);
+                    console.error(GetTimestamp()+"Error querying RDM: "+err.code);
+                    return resolve();                
                 }
-                else
+
+                let data;
+                try {
+                    data = JSON.parse(body);
+                } catch(err) {
+                    console.error(GetTimestamp()+"Could not retrieve data from website: "+body);
+                    console.error(GetTimestamp()+err);
+                    return resolve();                
+                }    
+
+                if(data.status=="error" || !data.data)
                 {
-                    await UpdateDevice(device);
+                    console.error(GetTimestamp()+"Could not retrieve data from website: "+data.error);
+                    return resolve();                
                 }
-            });   
-            return resolve();   
-        });
-             
+
+                if(!data.data.devices)
+                {
+                    console.error(GetTimestamp()+"Failed to retrieve device data from the website");
+                    return resolve();                
+                }
+
+                data.data.devices.forEach(async function(device) {
+                    if(!devices[device.uuid])
+                    {
+                        await AddDevice(device);
+                    }
+                    else
+                    {
+                        await UpdateDevice(device);
+                    }
+                });   
+                return resolve();   
+            });
+        }
     });    
 }
 
@@ -377,6 +389,7 @@ function AddDevice(device)
         "instance": device.instance,
         "host": device.host,
         "alerted": false,
+        "restarted": false,
         "builds":0
     };
 
@@ -418,6 +431,7 @@ async function PostStatus()
     await PostInstances();
     await PostGroupedDevices();
     await SendOfflineDeviceDMs();   
+    RestartWarnDevice();
          
     return;      
     
@@ -561,6 +575,73 @@ function SendOfflineDeviceDMs()
     
 }
 
+function RestartWarnDevice()
+{
+	if(!config.allowWarningReboots)
+	{
+		return;
+	}
+	else
+	{
+		let now = new Date();
+		now = now.getTime();
+
+		let warnedDevices = [];
+
+		for(var deviceName in devices)
+		{
+			let device = devices[deviceName];
+			let lastSeen = new Date(0);
+			lastSeen.setUTCSeconds(device.lastSeen);
+			lastSeen = lastSeen.getTime();
+			lastSeen = now - lastSeen;
+			if(lastSeen > warningTime)
+			{
+				if(!config.excludeFromReboots.includes(deviceName))
+				{
+					warnedDevices.push(device.name);
+				}
+			}
+		}
+
+		for(var i = 0; i < warnedDevices.length; i++)
+		{
+			if(!devices[warnedDevices[i]].restarted)
+			{
+				const options = {
+					url: config.restartMonitorURL,
+					json: true,
+					method: 'POST',
+					body: { 'type': 'restart', 'device': devices[warnedDevices[i]].name },
+					headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+				};
+				console.info(GetTimestamp()+`Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener`);
+				/* eslint-disable no-unused-vars */
+				request(options, (err, res, body) => {
+				/* eslint-enable no-unused-vars */
+					if (err) {
+						console.error(GetTimestamp()+`Failed to send reboot request to remote listener`);
+					}
+				});
+				SendRestartAlert(warnedDevices[i]);
+				devices[warnedDevices[i]].restarted = true;
+			}
+		}
+
+		for(var deviceName in devices)
+		{
+			if(devices[deviceName].restarted && warnedDevices.indexOf(deviceName) == -1)
+			{
+				devices[deviceName].restarted = false;
+				console.info(GetTimestamp()+`Device ${devices[deviceName].name} has come back online`);
+			}
+		}
+
+		setTimeout(RestartWarnDevice,60000);
+		return;
+	}
+}
+
 async function SendDMAlert(device)
 {    
     for(let i = 0; i < config.userAlerts.length; i++)
@@ -579,6 +660,33 @@ async function SendDMAlert(device)
         }
     }
     return;
+}
+
+function SendRestartAlert(device)
+{
+	if(!config.sendRestartAlerts)
+	{
+		return;
+	}
+	else
+	{
+		for(var i = 0; i < config.userAlerts.length; i++)
+		{
+			let user = bot.users.get(config.userAlerts[i]);
+			if(!user)
+			{
+				console.error(GetTimestamp()+"Cannot find a user to DM with ID: "+config.userAlerts[i]);
+			}
+			else
+			{
+				user.send(GetTimestamp()+" Device: "+device+" was sent the restart command").catch(error => {
+					console.error(GetTimestamp()+"Failed to send a DM to user: "+user.id);
+					return;
+				});
+			}
+		}
+		return;
+	}
 }
 
 async function SendDeviceOnlineAlert(device)

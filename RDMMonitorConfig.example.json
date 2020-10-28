@@ -34,5 +34,10 @@
     "offlineTime": 15,
     "rebuildTime": 0.25,
     
-    "queueLimit": 5
+    "queueLimit": 5,
+
+    "allowWarningReboots": true,
+    "restartMonitorURL": "http://192.168.0.1:6542",
+    "sendRestartAlerts": false,
+    "excludeFromReboots": ["Device01","Device02"]
 }
