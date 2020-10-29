@@ -50,6 +50,6 @@ rebuildTime: The time in minutes to consider a device is rebuilding
 queueLimit: A number for the IV queue limit
 
 allowWarningReboots: true/false - Bool to enable RDMDeviceMonitor to send a reboot request to a monitor
-restartMonitorURL: A string for the URL of the reboot monitor you are using like iPhone Controller
+restartMonitorURL: An array of strings for the URLs of the reboot monitors you are using like iPhone Controller and DCM Remote Listener
 sendRestartAlerts: true/false - Bool to enable the DM message for rebooting a device
 excludeFromReboots: An array of strings that are the unique names of the devices

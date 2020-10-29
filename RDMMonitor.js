@@ -588,23 +588,25 @@ function RestartWarnDevice()
         {
             if(!devices[warnedDevices[i]].restarted)
             {
-                const options = {
-                    url: config.restartMonitorURL,
-                    json: true,
-                    method: 'POST',
-                    body: { 'type': 'restart', 'device': devices[warnedDevices[i]].name },
-                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                };
-                console.info(GetTimestamp()+`Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener`);
-                /* eslint-disable no-unused-vars */
-                request(options, (err, res, body) => {
-                /* eslint-enable no-unused-vars */
-                    if (err) {
-                        console.error(GetTimestamp()+`Failed to send reboot request to remote listener`);
-                    }
-                });
-                SendRestartAlert(warnedDevices[i]);
-                devices[warnedDevices[i]].restarted = true;
+                for(var ii = 0; ii < config.restartMonitorURL.length; ii++) {
+                    const options = {
+                        url: config.restartMonitorURL[ii],
+                        json: true,
+                        method: 'POST',
+                        body: { 'type': 'restart', 'device': devices[warnedDevices[i]].name },
+                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    };
+                    console.info(GetTimestamp()+`Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener ${config.restartMonitorURL[ii]}`);
+                    /* eslint-disable no-unused-vars */
+                    request(options, (err, res, body) => {
+                    /* eslint-enable no-unused-vars */
+                        if (err) {
+                            console.error(GetTimestamp()+`Failed to send reboot request to remote listener`);
+                        }
+                    });
+                    SendRestartAlert(warnedDevices[i]);
+                    devices[warnedDevices[i]].restarted = true;
+                }
             }
         }
 

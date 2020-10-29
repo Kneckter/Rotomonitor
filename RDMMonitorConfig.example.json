@@ -37,7 +37,7 @@
     "queueLimit": 5,
 
     "allowWarningReboots": true,
-    "restartMonitorURL": "http://192.168.0.1:6542",
+    "restartMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
     "sendRestartAlerts": false,
     "excludeFromReboots": ["Device01","Device02"]
 }
