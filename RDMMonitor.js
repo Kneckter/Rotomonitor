@@ -15,6 +15,7 @@ const ivImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/maste
 const warningTime = config.warningTime * 60000;
 const offlineTime = config.offlineTime * 60000;
 const rebuildTime = config.rebuildTime * 60000;
+const reopenTime = config.reopenTime * 60000;
 
 const okColor = 0x008000;
 const warningColor = 0xFFFF00;
@@ -93,7 +94,6 @@ async function StartupSequence()
     await ClearAllChannels();
     await UpdateStatusLoop();
     await PostStatus();
-
     return;
 }
 
@@ -105,7 +105,6 @@ async function UpdateStatusLoop()
     console.log(GetTimestamp()+"Finished RDM query");
     setTimeout(UpdateStatusLoop, 5000);
     return;
-
 }
 
 function UpdateInstances()
@@ -375,7 +374,8 @@ function AddDevice(device)
         "instance": device.instance,
         "host": device.host,
         "alerted": false,
-        "restarted": false,
+        "rebooted": false,
+        "reopened": false,
         "builds":0
     };
 
@@ -417,8 +417,8 @@ async function PostStatus()
     await PostInstances();
     await PostGroupedDevices();
     await SendOfflineDeviceDMs();
-    RestartWarnDevice();
-
+    await ReopenWarnGame();
+    await RebootWarnDevice();
     return;
 }
 
@@ -446,7 +446,6 @@ async function PostDevices()
             }
         }
 
-
         console.log(GetTimestamp()+"Finished posting device status");
         setTimeout(PostDevices,postingDelay);
         return;
@@ -455,7 +454,6 @@ async function PostDevices()
 
 async function PostGroupedDevices()
 {
-
     return new Promise(async function(resolve) {
         if(config.postDeviceSummary)
         {
@@ -555,9 +553,75 @@ function SendOfflineDeviceDMs()
     return;
 }
 
-function RestartWarnDevice()
+function ReopenWarnGame()
 {
-    if(!config.allowWarningReboots)
+    if(!config.allowReopenGame)
+    {
+        return;
+    }
+    else
+    {
+        let now = new Date();
+        now = now.getTime();
+
+        let reopenDevices = [];
+
+        for(var deviceName in devices)
+        {
+            let device = devices[deviceName];
+            let lastSeen = new Date(0);
+            lastSeen.setUTCSeconds(device.lastSeen);
+            lastSeen = lastSeen.getTime();
+            lastSeen = now - lastSeen;
+            if(lastSeen > reopenTime)
+            {
+                if(!config.excludeFromReopen.includes(deviceName))
+                {
+                    reopenDevices.push(device.name);
+                }
+            }
+        }
+
+        for(var i = 0; i < reopenDevices.length; i++)
+        {
+            if(!devices[reopenDevices[i]].reopened)
+            {
+                for(var ii = 0; ii < config.reopenMonitorURL.length; ii++) {
+                    const options = {
+                        url: config.reopenMonitorURL[ii],
+                        json: true,
+                        method: 'POST',
+                        body: { 'type': 'reopen', 'device': devices[reopenDevices[i]].name },
+                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    };
+                    console.info(GetTimestamp()+`Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener ${config.reopenMonitorURL[ii]}`);
+                    request(options, (err, res, body) => {
+                        if (err) {
+                            console.error(GetTimestamp()+`Failed to send reopen game request to remote listener for ${options.body.device}`);
+                        }
+                    });
+                    devices[reopenDevices[i]].reopened = true;
+                }
+            }
+        }
+
+        for(var deviceName in devices)
+        {
+            if(devices[deviceName].reopened && reopenDevices.indexOf(deviceName) == -1)
+            {
+                devices[deviceName].reopened = false;
+                console.info(GetTimestamp()+`Device ${devices[deviceName].name} has come back online from reopening the game`);
+            }
+        }
+
+        setTimeout(ReopenWarnGame,60000);
+        return;
+    }
+}
+
+function RebootWarnDevice()
+{
+    if(!config.allowWarnReboots)
     {
         return;
     }
@@ -586,40 +650,38 @@ function RestartWarnDevice()
 
         for(var i = 0; i < warnedDevices.length; i++)
         {
-            if(!devices[warnedDevices[i]].restarted)
+            if(!devices[warnedDevices[i]].rebooted)
             {
-                for(var ii = 0; ii < config.restartMonitorURL.length; ii++) {
+                for(var ii = 0; ii < config.rebootMonitorURL.length; ii++) {
                     const options = {
-                        url: config.restartMonitorURL[ii],
+                        url: config.rebootMonitorURL[ii],
                         json: true,
                         method: 'POST',
                         body: { 'type': 'restart', 'device': devices[warnedDevices[i]].name },
                         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
                     };
-                    console.info(GetTimestamp()+`Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener ${config.restartMonitorURL[ii]}`);
-                    /* eslint-disable no-unused-vars */
+                    console.info(GetTimestamp()+`Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener ${config.rebootMonitorURL[ii]}`);
                     request(options, (err, res, body) => {
-                    /* eslint-enable no-unused-vars */
                         if (err) {
-                            console.error(GetTimestamp()+`Failed to send reboot request to remote listener`);
+                            console.error(GetTimestamp()+`Failed to send reboot request to remote listener for ${options.body.device}`);
                         }
                     });
-                    SendRestartAlert(warnedDevices[i]);
-                    devices[warnedDevices[i]].restarted = true;
+                    SendRebootAlert(warnedDevices[i]);
+                    devices[warnedDevices[i]].rebooted = true;
                 }
             }
         }
 
         for(var deviceName in devices)
         {
-            if(devices[deviceName].restarted && warnedDevices.indexOf(deviceName) == -1)
+            if(devices[deviceName].rebooted && warnedDevices.indexOf(deviceName) == -1)
             {
-                devices[deviceName].restarted = false;
-                console.info(GetTimestamp()+`Device ${devices[deviceName].name} has come back online`);
+                devices[deviceName].rebooted = false;
+                console.info(GetTimestamp()+`Device ${devices[deviceName].name} has come back online from rebooting the device`);
             }
         }
 
-        setTimeout(RestartWarnDevice,60000);
+        setTimeout(RebootWarnDevice,60000);
         return;
     }
 }
@@ -644,9 +706,9 @@ async function SendDMAlert(device)
     return;
 }
 
-function SendRestartAlert(device)
+function SendRebootAlert(device)
 {
-    if(!config.sendRestartAlerts)
+    if(!config.sendRebootAlerts)
     {
         return;
     }
@@ -661,7 +723,7 @@ function SendRestartAlert(device)
             }
             else
             {
-                user.send(GetTimestamp()+" Device: "+device+" was sent the restart command").catch(error => {
+                user.send(GetTimestamp()+" Device: "+device+" was sent the reboot command").catch(error => {
                     console.error(GetTimestamp()+"Failed to send a DM to user: "+user.id);
                     return;
                 });
@@ -693,7 +755,6 @@ async function SendDeviceOnlineAlert(device)
 
 function PostDeviceGroup(deviceList, color, image, title, messageID)
 {
-
     return new Promise(async function(resolve) {
         let channel = config.deviceSummaryChannel ? config.deviceSummaryChannel : config.channel;
         channel = await bot.channels.fetch(channel);
@@ -721,7 +782,6 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
                 console.error(GetTimestamp()+"Failed to edit a post: "+error);
                 return resolve();
             });
-            ;
         }
         else
         {
@@ -737,7 +797,6 @@ function PostDeviceGroup(deviceList, color, image, title, messageID)
 
 function GetDeviceString(deviceList)
 {
-
     let currentString = "";
 
     for(let i = 0; i < deviceList.length; i++)
@@ -761,7 +820,6 @@ function GetDeviceString(deviceList)
 
 async function PostInstances()
 {
-
     if(!config.postInstanceStatus)
     {
         return;
@@ -784,13 +842,11 @@ async function PostInstances()
                 await sleep(1000);
             }
         }
-
-            console.log(GetTimestamp()+"Finished posting instance status");
-            setTimeout(PostInstances,postingDelay);
-            return;
+        console.log(GetTimestamp()+"Finished posting instance status");
+        setTimeout(PostInstances,postingDelay);
+        return;
     }
 }
-
 
 async function PostLastUpdated()
 {
@@ -954,10 +1010,8 @@ function BuildInstanceEmbed(instance)
 function BuildDeviceEmbed(device)
 {
     let embed = new Discord.MessageEmbed();
-
     let color = okColor;
     let image = okImage;
-
     let now = new Date();
     now = now.getTime();
 
@@ -1038,7 +1092,6 @@ function ClearAllChannels()
 function ClearMessages(channelID)
 {
     return new Promise(async function(resolve) {
-
         if(channelsCleared) { return resolve(); }
         let channel = await bot.channels.fetch(channelID);
         if(!channel) { console.error(GetTimestamp()+"Could not find a channel with ID: "+channelID); return resolve(); }
@@ -1046,7 +1099,7 @@ function ClearMessages(channelID)
         if(messages.size > 0)
         {
             await ClearMessages(channelID);
-                return resolve(true);
+            return resolve(true);
         }
         else
         {

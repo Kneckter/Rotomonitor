@@ -30,11 +30,16 @@
 
     "postingDelay":1,
 
-    "warningTime": 1,
+    "warningTime": 10,
     "offlineTime": 15,
     "rebuildTime": 0.25,
 
     "queueLimit": 5,
+
+    "allowReopenGame": true,
+    "reopenTime": 5,
+    "reopenMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
+    "excludeFromReopen": ["Device01","Device02"],
 
     "allowWarningReboots": true,
     "restartMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],

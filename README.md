@@ -38,8 +38,8 @@ showOnlineTime: Show how long the deviceThe ttThe ttThe tt has been online
 
 clearMessagesOnStartup: Will delete all messages in the channel it is going to post to, this is to clear out posts from past history, DO NOT set this to true if you don't have a dedicated channel for device status as this will wipe out the channel
 
-ignoredDevices:
-ignoredInstances:
+ignoredDevices: An array of strings for the overall device blacklist
+ignoredInstances: An array of strings for the instance blacklist
 
 pollingDelay: Delay in minutes in between checking device/instance status.  A value of 0 would check immediately after it finishes checking/posting status, .5 would be 30 seconds, 1 would be 60 seconds, etc...
 
@@ -49,7 +49,12 @@ rebuildTime: The time in minutes to consider a device is rebuilding
 
 queueLimit: A number for the IV queue limit
 
-allowWarningReboots: true/false - Bool to enable RDMDeviceMonitor to send a reboot request to a monitor
-restartMonitorURL: An array of strings for the URLs of the reboot monitors you are using like iPhone Controller and DCM Remote Listener
-sendRestartAlerts: true/false - Bool to enable the DM message for rebooting a device
-excludeFromReboots: An array of strings that are the unique names of the devices
+allowReopenGame: true/false - Bool to enable RDMDeviceMonitor to send a reopen game request to a monitor
+reopenTime: The time in minutes to request a device to reopen the game
+reopenMonitorURL: An array of strings for the URLs of the reopen game monitors you are using like iPhone Controller or DCM Listener
+excludeFromReopen: An array of strings that are the unique names of the devices to exclude from the reopen game request
+
+allowWarnReboots: true/false - Bool to enable RDMDeviceMonitor to send a reboot request to a monitor
+rebootMonitorURL: An array of strings for the URLs of the reboot monitors you are using like iPhone Controller or DCM Listener
+sendRebootAlerts: true/false - Bool to enable the DM message for rebooting a device
+excludeFromReboots: An array of strings that are the unique names of the devices to exclude from the reboot request
