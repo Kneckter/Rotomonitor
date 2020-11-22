@@ -41,8 +41,8 @@
     "reopenMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
     "excludeFromReopen": ["Device01","Device02"],
 
-    "allowWarningReboots": true,
-    "restartMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
-    "sendRestartAlerts": false,
+    "allowWarnReboots": true,
+    "rebootMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
+    "sendRebootAlerts": false,
     "excludeFromReboots": ["Device01","Device02"]
 }
