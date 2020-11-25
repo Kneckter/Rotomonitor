@@ -606,7 +606,7 @@ async function SendDMAlert(device) {
     }
 }
 
-function SendRebootAlert(device) {
+async function SendRebootAlert(device) {
     if(!config.sendRebootAlerts) {
         return;
     }
