@@ -611,7 +611,7 @@ function SendRebootAlert(device) {
         return;
     }
     for(var i = 0; i < config.userAlerts.length; i++) {
-        let user = bot.users.get(config.userAlerts[i]);
+        let user = await bot.users.fetch(config.userAlerts[i]);
         if(!user) {
             console.error(GetTimestamp() + "Cannot find a user to DM with ID: " + config.userAlerts[i]);
         }
@@ -1026,12 +1026,13 @@ function GetTimestamp() {
     return "[" + now.toLocaleString() + "]";
 }
 
-function RestartBot(type) {
+async function RestartBot(type) {
     if(type == 'manual') {
         process.exit(1);
     }
     else {
         console.error(GetTimestamp() + "Unexpected error, bot stopping, likely websocket");
+        await sleep(60000);
         process.exit(1);
     }
 }
