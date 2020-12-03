@@ -13,26 +13,36 @@
     "websitePassword": "password",
 
     "postIndividualDevices":true,
-    "postInstanceStatus":true,  
+    "postInstanceStatus":true,
     "postDeviceSummary":true,
 
     "showInstance": true,
     "showAccount": true,
     "showHost": true,
-    "showLastSeen": true,  
+    "showLastSeen": true,
     "showBuildCount": true,
     "showOnlineTime": true,
 
-    "clearMessagesOnStartup": true,  
-    
+    "clearMessagesOnStartup": true,
+
     "ignoredDevices": [],
     "ignoredInstances": [],
 
     "postingDelay":1,
 
-    "warningTime": 1,
+    "warningTime": 10,
     "offlineTime": 15,
     "rebuildTime": 0.25,
-    
-    "queueLimit": 5
+
+    "queueLimit": 5,
+
+    "allowReopenGame": true,
+    "reopenTime": 5,
+    "reopenMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
+    "excludeFromReopen": ["Device01","Device02"],
+
+    "allowWarnReboots": true,
+    "rebootMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
+    "sendRebootAlerts": false,
+    "excludeFromReboots": ["Device01","Device02"]
 }
