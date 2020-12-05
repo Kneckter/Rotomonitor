@@ -1,3 +1,7 @@
+# Information
+
+This is a continuation of RDMMonitor by Chuckslove <https://github.com/chuckleslove/RDMMonitor>. We will continue to improve this repo where needed and keep it alive in his memory.
+
 # Requirements
 
 npm install request
