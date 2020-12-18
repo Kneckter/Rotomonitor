@@ -426,6 +426,9 @@ async function PostGroupedDevices() {
                     okDevices.push(device.name);
                 }
             }
+            okDevicesCount = okDevices.length;
+            warnDevicesCount = warnDevices.length;
+            offlineDevicesCount = offlineDevices.length;
             if(okDevices.length == 0) {
                 okDevices.push("None")
             }
@@ -435,9 +438,6 @@ async function PostGroupedDevices() {
             if(offlineDevices.length == 0) {
                 offlineDevices.push("None")
             }
-            okDevicesCount = okDevices.length;
-            warnDevicesCount = warnDevices.length;
-            offlineDevicesCount = offlineDevices.length;
             PostDeviceGroup(okDevices, okColor, okImage, 'Working Devices ' + okDevicesCount, okDeviceMessage).then(posted => {
                 okDeviceMessage = posted.id;
                 PostDeviceGroup(warnDevices, warningColor, warningImage, 'Warning Devices ' + warnDevicesCount, warnDeviceMessage).then(posted => {
