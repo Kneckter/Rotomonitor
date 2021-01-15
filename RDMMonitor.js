@@ -97,8 +97,8 @@ bot.on('message', async message => {
                 "`" + config.cmdPrefix + "reopen <DEVICE-NAMES>`   \\\u00BB   to reopen the game on specific devices.\n" +
                 "`" + config.cmdPrefix + "reboot <DEVICE-NAMES>`   \\\u00BB   to reboot the specific devices.\n" /*+
                 "`" + config.cmdPrefix + "sam <DEVICE-NAMES>`   \\\u00BB   to add more time to a temporary role assignment\n"*/ +
-                "Reopen and reboot accept multiple names separated by commas.\n" + 
-                "They can be used to skip the exclusion list if you specify a name on the list.\n" + 
+                "Reopen and reboot accept multiple names separated by commas.\n" +
+                "They can be used to skip the exclusion list if you specify a name on the list.\n" +
                 "They can accept `all`, `allwarn`, or `alloff` to apply to groups but will omit devices on the exclude lists."
             bot.channels.cache.get(config.channel).send(cmds).then((message) => {
                 message.delete({
