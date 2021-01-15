@@ -78,6 +78,9 @@ allowWarnReboots: true/false - Bool to enable RDMDeviceMonitor to send a reboot 
 rebootMonitorURL: An array of strings for the URLs of the reboot monitors you are using like iPhone Controller or DCM Listener
 sendRebootAlerts: true/false - Bool to enable the DM message for rebooting a device
 excludeFromReboots: An array of strings that are the unique names of the devices to exclude from the reboot request
+
+cmdPrefix: A single character used to identify commands that the bot should react to
+adminRoleName: This is a string for the name of the main role that will admin the bot
 ```
 
 # LAUNCHING IT
@@ -87,3 +90,16 @@ Using terminal, run `node RDMMonitor.js`
    * If you close that window, the bot connection will be terminated! You can add it to PM2 if you want it to run in the background.
 
 Instead, add it to PM2 with `pm2 start ecosystem.config.js`
+
+<hr />
+
+# USAGE
+
+`.help`<br>
+--`.restart`   »   to manually restart the whole bot<br>
+--`.reopen <DEVICE-NAMES>`   »   to reopen the game on specific devices<br>
+--`.reboot <DEVICE-NAMES>`   »   to reboot the specific devices<br>
+
+Reopen and reboot accept multiple names separated by commas.<br>
+They can be used to skip the exclusion list if you specify a name on the list.<br>
+They can accept `all`, `allwarn`, or `alloff` to apply to groups but will omit devices on the exclude lists.
