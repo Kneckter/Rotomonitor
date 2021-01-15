@@ -686,9 +686,11 @@ function ReopenWarnGame(manDevices) {
                     },
                 };
                 console.info(GetTimestamp() + `Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener ${config.reopenMonitorURL[ii]}`);
+                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener`); }
                 request(options, (err, res, body) => {
                     if(err) {
                         console.error(GetTimestamp() + `Failed to send reopen game request to remote listener for ${options.body.device}`);
+                        if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reopen game request to remote listener for ${options.body.device}`); }
                     }
                 });
                 devices[reopenDevices[i]].reopened = true;
@@ -745,9 +747,11 @@ function RebootWarnDevice(manDevices) {
                     },
                 };
                 console.info(GetTimestamp() + `Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener ${config.rebootMonitorURL[ii]}`);
+                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener`); }
                 request(options, (err, res, body) => {
                     if(err) {
                         console.error(GetTimestamp() + `Failed to send reboot request to remote listener for ${options.body.device}`);
+                        if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reboot request to remote listener for ${options.body.device}`); }
                     }
                 });
                 SendRebootAlert(warnedDevices[i]);
