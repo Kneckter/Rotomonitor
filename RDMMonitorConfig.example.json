@@ -46,6 +46,6 @@
     "sendRebootAlerts": false,
     "excludeFromReboots": ["Device01","Device02"],
 
-	"cmdPrefix": ".",
-	"adminRoleName": "ADMIN-ROLE-NAME"
+    "cmdPrefix": ".",
+    "adminRoleName": "ADMIN-ROLE-NAME"
 }
