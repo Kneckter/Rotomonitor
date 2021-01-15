@@ -407,6 +407,9 @@ async function PostGroupedDevices() {
             let okDevices = [];
             let warnDevices = [];
             let offlineDevices = [];
+            let okDevicesCount = 0;
+            let warnDevicesCount = 0;
+            let offlineDevicesCount = 0;
             for(let deviceName in devices) {
                 let device = devices[deviceName];
                 let lastSeen = new Date(0);
@@ -423,6 +426,9 @@ async function PostGroupedDevices() {
                     okDevices.push(device.name);
                 }
             }
+            okDevicesCount = okDevices.length;
+            warnDevicesCount = warnDevices.length;
+            offlineDevicesCount = offlineDevices.length;
             if(okDevices.length == 0) {
                 okDevices.push("None")
             }
@@ -432,11 +438,11 @@ async function PostGroupedDevices() {
             if(offlineDevices.length == 0) {
                 offlineDevices.push("None")
             }
-            PostDeviceGroup(okDevices, okColor, okImage, 'Working Devices', okDeviceMessage).then(posted => {
+            PostDeviceGroup(okDevices, okColor, okImage, 'Working Devices: ' + okDevicesCount, okDeviceMessage).then(posted => {
                 okDeviceMessage = posted.id;
-                PostDeviceGroup(warnDevices, warningColor, warningImage, 'Warning Devices', warnDeviceMessage).then(posted => {
+                PostDeviceGroup(warnDevices, warningColor, warningImage, 'Warned Devices: ' + warnDevicesCount, warnDeviceMessage).then(posted => {
                     warnDeviceMessage = posted.id;
-                    PostDeviceGroup(offlineDevices, offlineColor, offlineImage, 'Offline Devices', offlineDeviceMessage).then(posted => {
+                    PostDeviceGroup(offlineDevices, offlineColor, offlineImage, 'Offline Devices: ' + offlineDevicesCount, offlineDeviceMessage).then(posted => {
                         offlineDeviceMessage = posted.id;
                         offlineDeviceList = offlineDevices;
                         PostLastUpdated();
