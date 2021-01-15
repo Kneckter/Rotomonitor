@@ -2,19 +2,39 @@
 
 This is a continuation of RDMMonitor by Chuckslove <https://github.com/chuckleslove/RDMMonitor>. We will continue to improve this repo where needed and keep it alive in his memory.
 
-# Requirements
+RDMDeviceMonitor is a simple discord bot to monitor device status for RDM.
 
-npm install request
+<hr />
 
-npm install discord.js
+# SETTING UP THE BOT:
 
-# RDMDeviceMonitor
+1. Download `Node.js ver v12.18.3` from https://nodejs.org/en/download/
 
-Simple Discord Bot to monitor device status for RDM
+2. Run `git clone https://github.com/Kneckter/RDMMonitor` to copy the bot.
 
+3. Change into the new folder `cd RDMMonitor/`.
 
-Config options
+4. Run `npm install`.
 
+5. Copy the example file `cp RDMMonitorConfig.example.json RDMMonitorConfig.json`.
+
+6. Create an applicaiton and get the your bot's secret token, and application ID at:
+   * https://discordapp.com/developers/applications/me
+
+7. Get your application/bot to join your server by going here:
+   * https://discordapp.com/developers/tools/permissions-calculator
+   * Check the boxes for the needed permissions
+     * Minimum requirements: manage messages, send messages, read message history
+   * Use the URL that the page generates and go to it, and you will be asked to log into your discord. You will need **Admin** access in order to get the bot to join that server.
+
+8. Fill out the information needed in `nano RDMMonitorConfig.json`.
+   * The mainChannelID could be a channel that only admin/mod/owner have access to. It reports expired roles.
+     * You can also use this channel to @usernames without them getting notified because people cannot see tags to channels they cannot access.
+
+<hr />
+
+# SETTINGS
+```
 token: Mandator, discord bot token, bot should have send message and manage message permissions in the designated channel
 channel: Default channel ID of where to post device/instance status
 deviceStatusChannel: Specific channel ID of where to post device status
@@ -32,12 +52,12 @@ postIndividualDevices: true/false - Bool to post each device individually
 postInstanceStatus: true/false - Bool to post instance status
 postDeviceSummary: true/false - Bool to post device status in a single block by current status
 
-showInstance: Show which instance a device is assigned to on the indThe ttividual device post
+showInstance: Show which instance a device is assigned to on the individual device post
 showAccount: Show account assigned on device post
 showHost: Show host IP for the device
 showLastSeen: Show when the device was last seen
 showBuildCount: Show the amount of times a device rebuilt
-showOnlineTime: Show how long the deviceThe ttThe ttThe tt has been online
+showOnlineTime: Show how long the device has been online
 
 clearMessagesOnStartup: Will delete all messages in the channel it is going to post to, this is to clear out posts from past history, DO NOT set this to true if you don't have a dedicated channel for device status as this will wipe out the channel
 
@@ -60,3 +80,12 @@ allowWarnReboots: true/false - Bool to enable RDMDeviceMonitor to send a reboot 
 rebootMonitorURL: An array of strings for the URLs of the reboot monitors you are using like iPhone Controller or DCM Listener
 sendRebootAlerts: true/false - Bool to enable the DM message for rebooting a device
 excludeFromReboots: An array of strings that are the unique names of the devices to exclude from the reboot request
+```
+
+# LAUNCHING IT
+
+Using terminal, run `node RDMMonitor.js`
+
+   * If you close that window, the bot connection will be terminated! You can add it to PM2 if you want it to run in the background.
+
+Instead, add it to PM2 with `pm2 start ecosystem.config.js`
