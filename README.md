@@ -22,7 +22,6 @@ instanceStatusChannel: Specific channel ID of where to post instance status
 deviceSummaryChannel: Specific channel ID of where to post the device summary
 
 userAlerts: an array of user IDs to DM upon device going offline
-The tt
 url: URL of your RDM website, by default IP:9000 but can use actual URL if you have a properly configured reverse proxy
 websiteLogin: Username to login with
 websitePassword: Password for the username
@@ -44,8 +43,7 @@ clearMessagesOnStartup: Will delete all messages in the channel it is going to p
 
 ignoredDevices: An array of strings for the overall device blacklist
 ignoredInstances: An array of strings for the instance blacklist
-
-pollingDelay: Delay in minutes in between checking device/instance status.  A value of 0 would check immediately after it finishes checking/posting status, .5 would be 30 seconds, 1 would be 60 seconds, etc...
+postingDelay: The time in minutes to delay different posting triggers
 
 warningTime: The time in minutes to consider a device in warning state
 offlineTime: The time in minutes a device must be offline before marked as red/offline and send a DM to the designated users
