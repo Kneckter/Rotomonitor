@@ -28,8 +28,6 @@ RDMDeviceMonitor is a simple discord bot to monitor device status for RDM.
    * Use the URL that the page generates and go to it, and you will be asked to log into your discord. You will need **Admin** access in order to get the bot to join that server.
 
 8. Fill out the information needed in `nano RDMMonitorConfig.json`.
-   * The mainChannelID could be a channel that only admin/mod/owner have access to. It reports expired roles.
-     * You can also use this channel to @usernames without them getting notified because people cannot see tags to channels they cannot access.
 
 <hr />
 
