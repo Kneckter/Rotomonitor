@@ -56,20 +56,157 @@ function Login() {
     }
 }
 
-bot.on('message', message => {
-    switch (message.channel.id) {
-        case config.channel:
-        case config.deviceStatusChannel:
-        case config.instanceStatusChannel:
-        case config.deviceSummaryChannel:
-            if(message.content == 'restart') {
+bot.on('message', async message => {
+    // MAKE SURE ITS A COMMAND
+    if(!message.content.startsWith(config.cmdPrefix)) {
+        return;
+    }
+    //STOP SCRIPT IF DM/PM
+    if(message.channel.type == "dm") {
+        return;
+    }
+    // GET CHANNEL INFO
+    let guild = message.guild;
+    let channel = message.channel.id;
+    let member = message.member;
+    let msg = message.content;
+    // REMOVE LETTER CASE (MAKE ALL LOWERCASE)
+    let command = msg.toLowerCase();
+    command = command.split(" ")[0];
+    command = command.slice(config.cmdPrefix.length);
+    // GET ARGUMENTS
+    let args = msg.slice(config.cmdPrefix.length + command.length); // Cut the command off
+    args = args.split(",").map(function(item) {
+        return item.trim();
+    });
+    // GET ROLES FROM CONFIG
+    let AdminR = guild.roles.cache.find(role => role.name === config.adminRoleName);
+    if(!AdminR) {
+        AdminR = { "id": "111111111111111111" };
+        console.info(GetTimestamp() + "[ERROR] [CONFIG] I could not find admin role: " + config.adminRoleName);
+    }
+    //STOP SCRIPT IF IT IS NOT THE MAIN CHANNEL
+    if (config.channel != channel) {
+        return;
+    }
+    // ############################# COMMANDS/HELP ################################
+    if(member.roles.cache.has(AdminR.id)) {
+        if(command === "help") {
+            message.delete();
+            cmds = "`" + config.cmdPrefix + "restart`   \\\u00BB   to manually restart the whole bot.\n" +
+                "`" + config.cmdPrefix + "reopen <DEVICE-NAMES>`   \\\u00BB   to reopen the game on specific devices.\n" +
+                "`" + config.cmdPrefix + "reboot <DEVICE-NAMES>`   \\\u00BB   to reboot the specific devices.\n" /*+
+                "`" + config.cmdPrefix + "sam <DEVICE-NAMES>`   \\\u00BB   to add more time to a temporary role assignment\n"*/ +
+                "Reopen and reboot accept multiple names separated by commas.\n" +
+                "They can be used to skip the exclusion list if you specify a name on the list.\n" +
+                "They can accept `all`, `allwarn`, or `alloff` to apply to groups but will omit devices on the exclude lists."
+            bot.channels.cache.get(config.channel).send(cmds).then((message) => {
+                message.delete({
+                    timeout: 60000
+                });
+            }).catch(err => {console.error(GetTimestamp()+err);});
+            return;
+        }
+        if(command === "restart") {
+            // Restart the whole bot
+            if(!args[0]) {
+                await bot.channels.cache.get(config.channel).send("Restarting the bot...");
                 RestartBot('manual');
             }
-            break;
-        default:
+            else {
+                message.delete();
+                message.reply("If you send this command again without any arguements, it will restart the bot. Did you mean to reboot a devices like `" + config.cmdPrefix + "reboot 001-SE`?");
+                return;
+            }
+        }
+
+        if(!args[0]) {
+            message.delete();
+            message.reply("Please enter a device name after the command like `" + config.cmdPrefix + "reboot 001-SE`");
             return;
+        }
+
+        // Handle all/alloff/allwarn variables and omit exclusions
+        var manDevices = [];
+        var exclude = [];
+        if(command === "reboot") {
+            exclude = config.excludeFromReboots;
+        }
+        else if(command === "reopen") {
+            exclude = config.excludeFromReopen;
+        }
+        else if(command === "sam") {
+            // WIP
+        }
+
+        if (args.length == 1 && args[0] == "all") {
+            for(var deviceName in devices) {
+                let device = devices[deviceName];
+                if(!exclude.includes(deviceName)) {
+                    manDevices.push(device.name);
+                }
+            }
+        }
+        else if (args.length == 1 && args[0] == "alloff") {
+            let now = new Date();
+            now = now.getTime();
+            for(let deviceName in devices) {
+                let device = devices[deviceName];
+                let lastSeen = new Date(0);
+                lastSeen.setUTCSeconds(device.lastSeen);
+                lastSeen = lastSeen.getTime();
+                lastSeen = now - lastSeen;
+                if(lastSeen > offlineTime && !exclude.includes(deviceName)) {
+                    manDevices.push(device.name);
+                }
+            }
+        }
+        else if (args.length == 1 && args[0] == "allwarn") {
+            let now = new Date();
+            now = now.getTime();
+            for(let deviceName in devices) {
+                let device = devices[deviceName];
+                let lastSeen = new Date(0);
+                lastSeen.setUTCSeconds(device.lastSeen);
+                lastSeen = lastSeen.getTime();
+                lastSeen = now - lastSeen;
+                if(lastSeen > warningTime && !exclude.includes(deviceName)) {
+                    manDevices.push(device.name);
+                }
+            }
+        }
+        else {
+            // Check all the device names and add them to the array
+            for(var x = 0; x < args.length; x++) {
+                if (devices[args[x]]) {
+                    manDevices.push(args[x]);
+                }
+                else {
+                    bot.channels.cache.get(config.channel).send("Could not locate device: " + args[x]);
+                }
+            }
+        }
+
+        if(command === "reboot") {
+            // Reboot a specific device
+            RebootWarnDevice(manDevices)
+        }
+        else if(command === "reopen") {
+            // Reopen a game for a specific device
+            ReopenWarnGame(manDevices);
+        }
+        else if(command === "sam") {
+            // Reapply the SAM profile
+        }
     }
-    return;
+    else {
+        message.reply("You are **NOT** allowed to use this command! \ntry using: `" + config.cmdPrefix + "commands`").then((message) => {
+            message.delete({
+                timeout: 10000
+            });
+        }).catch(err => {console.error(GetTimestamp()+err);});
+        return;
+    }
 });
 
 bot.on('ready', () => {
@@ -83,6 +220,26 @@ bot.on('ready', () => {
     StartupSequence();
     return;
 });
+
+bot.on('error', function(err) {
+    if(typeof err == 'object') {
+        err = JSON.stringify(err);
+    }
+    console.error(GetTimestamp() + 'Uncaught exception: ' + err);
+    RestartBot();
+    return;
+});
+
+bot.on('disconnect', function(closed) {
+    console.error(GetTimestamp() + 'Disconnected from Discord');
+    return;
+});
+
+function sleep(ms) {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
+}
 
 async function StartupSequence() {
     await ClearAllChannels();
@@ -488,27 +645,32 @@ function SendOfflineDeviceDMs() {
     setTimeout(SendOfflineDeviceDMs, 60000);
 }
 
-function ReopenWarnGame() {
+function ReopenWarnGame(manDevices) {
     if(!config.allowReopenGame) {
         return;
     }
     let now = new Date();
     now = now.getTime();
     let reopenDevices = [];
-    for(var deviceName in devices) {
-        let device = devices[deviceName];
-        let lastSeen = new Date(0);
-        lastSeen.setUTCSeconds(device.lastSeen);
-        lastSeen = lastSeen.getTime();
-        lastSeen = now - lastSeen;
-        if(lastSeen > reopenTime) {
-            if(!config.excludeFromReopen.includes(deviceName)) {
-                reopenDevices.push(device.name);
+    if (manDevices) {
+        reopenDevices = manDevices;
+    }
+    else {
+        for(var deviceName in devices) {
+            let device = devices[deviceName];
+            let lastSeen = new Date(0);
+            lastSeen.setUTCSeconds(device.lastSeen);
+            lastSeen = lastSeen.getTime();
+            lastSeen = now - lastSeen;
+            if(lastSeen > reopenTime) {
+                if(!config.excludeFromReopen.includes(deviceName)) {
+                    reopenDevices.push(device.name);
+                }
             }
         }
     }
     for(var i = 0; i < reopenDevices.length; i++) {
-        if(!devices[reopenDevices[i]].reopened) {
+        if(!devices[reopenDevices[i]].reopened || manDevices) {
             for(var ii = 0; ii < config.reopenMonitorURL.length; ii++) {
                 const options = {
                     url: config.reopenMonitorURL[ii],
@@ -524,9 +686,11 @@ function ReopenWarnGame() {
                     },
                 };
                 console.info(GetTimestamp() + `Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener ${config.reopenMonitorURL[ii]}`);
+                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener`); }
                 request(options, (err, res, body) => {
                     if(err) {
                         console.error(GetTimestamp() + `Failed to send reopen game request to remote listener for ${options.body.device}`);
+                        if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reopen game request to remote listener for ${options.body.device}`); }
                     }
                 });
                 devices[reopenDevices[i]].reopened = true;
@@ -542,27 +706,32 @@ function ReopenWarnGame() {
     setTimeout(ReopenWarnGame, 60000);
 }
 
-function RebootWarnDevice() {
+function RebootWarnDevice(manDevices) {
     if(!config.allowWarnReboots) {
         return;
     }
     let now = new Date();
     now = now.getTime();
     let warnedDevices = [];
-    for(var deviceName in devices) {
-        let device = devices[deviceName];
-        let lastSeen = new Date(0);
-        lastSeen.setUTCSeconds(device.lastSeen);
-        lastSeen = lastSeen.getTime();
-        lastSeen = now - lastSeen;
-        if(lastSeen > warningTime) {
-            if(!config.excludeFromReboots.includes(deviceName)) {
-                warnedDevices.push(device.name);
+    if (manDevices) {
+        warnedDevices = manDevices;
+    }
+    else {
+        for(var deviceName in devices) {
+            let device = devices[deviceName];
+            let lastSeen = new Date(0);
+            lastSeen.setUTCSeconds(device.lastSeen);
+            lastSeen = lastSeen.getTime();
+            lastSeen = now - lastSeen;
+            if(lastSeen > warningTime) {
+                if(!config.excludeFromReboots.includes(deviceName)) {
+                    warnedDevices.push(device.name);
+                }
             }
         }
     }
     for(var i = 0; i < warnedDevices.length; i++) {
-        if(!devices[warnedDevices[i]].rebooted) {
+        if(!devices[warnedDevices[i]].rebooted || manDevices) {
             for(var ii = 0; ii < config.rebootMonitorURL.length; ii++) {
                 const options = {
                     url: config.rebootMonitorURL[ii],
@@ -578,9 +747,11 @@ function RebootWarnDevice() {
                     },
                 };
                 console.info(GetTimestamp() + `Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener ${config.rebootMonitorURL[ii]}`);
+                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener`); }
                 request(options, (err, res, body) => {
                     if(err) {
                         console.error(GetTimestamp() + `Failed to send reboot request to remote listener for ${options.body.device}`);
+                        if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reboot request to remote listener for ${options.body.device}`); }
                     }
                 });
                 SendRebootAlert(warnedDevices[i]);
@@ -1043,44 +1214,6 @@ async function RestartBot(type) {
     }
 }
 
-bot.on('error', function(err) {
-    if(typeof err == 'object') {
-        err = JSON.stringify(err);
-    }
-    console.error(GetTimestamp() + 'Uncaught exception: ' + err);
-    RestartBot();
-    return;
-});
-
-process.on('uncaughtException', function(err) {
-    if(typeof err == 'object') {
-        err = JSON.stringify(err);
-    }
-    console.error(GetTimestamp() + 'Uncaught exception: ' + err);
-    RestartBot();
-    return;
-});
-
-process.on('unhandledRejection', function(err) {
-    if(typeof err == 'object') {
-        err = JSON.stringify(err);
-    }
-    console.error(GetTimestamp() + 'Uncaught exception: ' + err);
-    RestartBot();
-    return;
-});
-
-bot.on('disconnect', function(closed) {
-    console.error(GetTimestamp() + 'Disconnected from Discord');
-    return;
-});
-
-function sleep(ms) {
-    return new Promise(resolve => {
-        setTimeout(resolve, ms);
-    });
-}
-
 function GetIVQueue(instanceName) {
     let queueLimit = config.queueLimit ? config.queueLimit : 5;
     return new Promise(function(resolve) {
@@ -1107,3 +1240,19 @@ function GetIVQueue(instanceName) {
         });
     });
 }
+
+process.on('uncaughtException', function(err) {
+    if(typeof err == 'object') {
+        err = JSON.stringify(err);
+    }
+    console.error(GetTimestamp() + 'Uncaught exception: ' + err);
+    RestartBot();
+});
+
+process.on('unhandledRejection', function(err) {
+    if(typeof err == 'object') {
+        err = JSON.stringify(err);
+    }
+    console.error(GetTimestamp() + 'Uncaught exception: ' + err);
+    RestartBot();
+});
