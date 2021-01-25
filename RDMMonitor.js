@@ -535,7 +535,7 @@ async function PostStatus() {
     await PostGroupedDevices();
     await SendOfflineDeviceDMs();
     await ReopenWarnGame();
-    await ReapplySAM();
+    //await ReapplySAM();
     await RebootWarnDevice();
 }
 
@@ -702,7 +702,7 @@ function ReopenWarnGame(manDevices) {
         }
     }
     for(var deviceName in devices) {
-        if(devices[deviceName].reopened && !devices[deviceName].reapplied && !devices[deviceName].rebooted && reopenDevices.indexOf(deviceName) == -1) {
+        if(devices[deviceName].reopened && reopenDevices.indexOf(deviceName) == -1) {
             devices[deviceName].reopened = false;
             console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from reopening the game`);
         }
@@ -763,8 +763,7 @@ function ReapplySAM(manDevices) {
         }
     }
     for(var deviceName in devices) {
-        if(devices[deviceName].reopened && devices[deviceName].reapplied && !devices[deviceName].rebooted && reapplyDevices.indexOf(deviceName) == -1) {
-            devices[deviceName].reopened = false;
+        if(devices[deviceName].reapplied && reapplyDevices.indexOf(deviceName) == -1) {
             devices[deviceName].reapplied = false;
             console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from reapplying the profile`);
         }
@@ -826,9 +825,7 @@ function RebootWarnDevice(manDevices) {
         }
     }
     for(var deviceName in devices) {
-        if(devices[deviceName].reopened && devices[deviceName].reapplied && devices[deviceName].rebooted && warnedDevices.indexOf(deviceName) == -1) {
-            devices[deviceName].reopened = false;
-            devices[deviceName].reapplied = false;
+        if(devices[deviceName].rebooted && warnedDevices.indexOf(deviceName) == -1) {
             devices[deviceName].rebooted = false;
             console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from rebooting the device`);
         }

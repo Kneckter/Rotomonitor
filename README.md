@@ -74,8 +74,7 @@ reopenTime: The time in minutes to request a device to reopen the game
 reopenMonitorURL: An array of strings for the URLs of the reopen game monitors you are using like iPhone Controller or DCM Listener
 excludeFromReopen: An array of strings that are the unique names of the devices to exclude from the reopen game request
 
-allowReapplySAM: true/false - Bool to enable RDMDeviceMonitor to send a request to a monitor for reapplying the SAM profile
-reapplySAMTime: The time in minutes to request a device to reapply the SAM profile
+allowReapplySAM: true/false - Bool to enable RDMDeviceMonitor to send a request to a monitor for reapplying the SAM profile.
 reapplySAMMonitorURL: An array of strings for the URLs of the reapply SAM monitors you are using like iPhone Controller or DCM Listener
 excludeFromReapplySAM: An array of strings that are the unique names of the devices to exclude from the reapply SAM request
 
