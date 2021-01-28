@@ -14,6 +14,7 @@ const warningTime = config.warningTime * 60000;
 const offlineTime = config.offlineTime * 60000;
 const rebuildTime = config.rebuildTime * 60000;
 const reopenTime = config.reopenTime * 60000;
+//const reapplySAMTime = config.reapplySAMTime * 60000;
 const okColor = 0x008000;
 const warningColor = 0xFFFF00;
 const offlineColor = 0xFF0000;
@@ -95,9 +96,9 @@ bot.on('message', async message => {
             message.delete();
             cmds = "`" + config.cmdPrefix + "restart`   \\\u00BB   to manually restart the whole bot.\n" +
                 "`" + config.cmdPrefix + "reopen <DEVICE-NAMES>`   \\\u00BB   to reopen the game on specific devices.\n" +
-                "`" + config.cmdPrefix + "reboot <DEVICE-NAMES>`   \\\u00BB   to reboot the specific devices.\n" /*+
-                "`" + config.cmdPrefix + "sam <DEVICE-NAMES>`   \\\u00BB   to add more time to a temporary role assignment\n"*/ +
-                "Reopen and reboot accept multiple names separated by commas.\n" +
+                "`" + config.cmdPrefix + "reboot <DEVICE-NAMES>`   \\\u00BB   to reboot the specific devices.\n" +
+                "`" + config.cmdPrefix + "sam <DEVICE-NAMES>`   \\\u00BB   to reapply the SAM profile to the specific devices\n" +
+                "The commands with `<DEVICE-NAMES>` accept multiple names separated by commas.\n" +
                 "They can be used to skip the exclusion list if you specify a name on the list.\n" +
                 "They can accept `all`, `allwarn`, or `alloff` to apply to groups but will omit devices on the exclude lists."
             bot.channels.cache.get(config.channel).send(cmds).then((message) => {
@@ -136,7 +137,7 @@ bot.on('message', async message => {
             exclude = config.excludeFromReopen;
         }
         else if(command === "sam") {
-            // WIP
+            exclude = config.excludeFromReapplySAM;
         }
 
         if (args.length == 1 && args[0] == "all") {
@@ -189,7 +190,7 @@ bot.on('message', async message => {
 
         if(command === "reboot") {
             // Reboot a specific device
-            RebootWarnDevice(manDevices)
+            RebootWarnDevice(manDevices);
         }
         else if(command === "reopen") {
             // Reopen a game for a specific device
@@ -197,6 +198,7 @@ bot.on('message', async message => {
         }
         else if(command === "sam") {
             // Reapply the SAM profile
+            ReapplySAM(manDevices);
         }
     }
     else {
@@ -484,6 +486,7 @@ function AddDevice(device) {
         "alerted": false,
         "rebooted": false,
         "reopened": false,
+        "reapplied": false,
         "builds": 0
     };
     if(!devices[device.uuid].lastSeen) {
@@ -532,6 +535,7 @@ async function PostStatus() {
     await PostGroupedDevices();
     await SendOfflineDeviceDMs();
     await ReopenWarnGame();
+    //await ReapplySAM();
     await RebootWarnDevice();
 }
 
@@ -701,6 +705,67 @@ function ReopenWarnGame(manDevices) {
         if(devices[deviceName].reopened && reopenDevices.indexOf(deviceName) == -1) {
             devices[deviceName].reopened = false;
             console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from reopening the game`);
+        }
+    }
+    setTimeout(ReopenWarnGame, 60000);
+}
+
+function ReapplySAM(manDevices) {
+    if(!config.allowReapplySAM) {
+        return;
+    }
+    let now = new Date();
+    now = now.getTime();
+    let reapplyDevices = [];
+    if (manDevices) {
+        reapplyDevices = manDevices;
+    }
+    else {
+        for(var deviceName in devices) {
+            let device = devices[deviceName];
+            let lastSeen = new Date(0);
+            lastSeen.setUTCSeconds(device.lastSeen);
+            lastSeen = lastSeen.getTime();
+            lastSeen = now - lastSeen;
+            if(lastSeen > reapplySAMTime) {
+                if(!config.excludeFromReapplySAM.includes(deviceName)) {
+                    reapplyDevices.push(device.name);
+                }
+            }
+        }
+    }
+    for(var i = 0; i < reapplyDevices.length; i++) {
+        if(!devices[reapplyDevices[i]].reapplied || manDevices) {
+            for(var ii = 0; ii < config.reapplySAMMonitorURL.length; ii++) {
+                const options = {
+                    url: config.reapplySAMMonitorURL[ii],
+                    json: true,
+                    method: 'POST',
+                    body: {
+                        'type': 'profile',
+                        'device': devices[reapplyDevices[i]].name
+                    },
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                };
+                console.info(GetTimestamp() + `Sending a request to reapply the SAM profile for ${devices[reapplyDevices[i]].name} to remote listener ${config.reapplySAMMonitorURL[ii]}`);
+                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending a request to reapply the SAM profile for ${devices[reapplyDevices[i]].name} to remote listener`); }
+                request(options, (err, res, body) => {
+                    if(err) {
+                        console.error(GetTimestamp() + `Failed to send request to reapply the SAM profile to remote listener for ${options.body.device}`);
+                        if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send request to reapply the SAM profile to remote listener for ${options.body.device}`); }
+                    }
+                });
+                devices[reapplyDevices[i]].reapplied = true;
+            }
+        }
+    }
+    for(var deviceName in devices) {
+        if(devices[deviceName].reapplied && reapplyDevices.indexOf(deviceName) == -1) {
+            devices[deviceName].reapplied = false;
+            console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from reapplying the profile`);
         }
     }
     setTimeout(ReopenWarnGame, 60000);

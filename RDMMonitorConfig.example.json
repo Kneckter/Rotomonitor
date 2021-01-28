@@ -41,6 +41,10 @@
     "reopenMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
     "excludeFromReopen": ["Device01","Device02"],
 
+    "allowReapplySAM": true,
+    "reapplySAMMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
+    "excludeFromReapplySAM": ["Device01","Device02"],
+
     "allowWarnReboots": true,
     "rebootMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
     "sendRebootAlerts": false,

@@ -74,6 +74,10 @@ reopenTime: The time in minutes to request a device to reopen the game
 reopenMonitorURL: An array of strings for the URLs of the reopen game monitors you are using like iPhone Controller or DCM Listener
 excludeFromReopen: An array of strings that are the unique names of the devices to exclude from the reopen game request
 
+allowReapplySAM: true/false - Bool to enable RDMDeviceMonitor to send a request to a monitor for reapplying the SAM profile.
+reapplySAMMonitorURL: An array of strings for the URLs of the reapply SAM monitors you are using like iPhone Controller or DCM Listener
+excludeFromReapplySAM: An array of strings that are the unique names of the devices to exclude from the reapply SAM request
+
 allowWarnReboots: true/false - Bool to enable RDMDeviceMonitor to send a reboot request to a monitor
 rebootMonitorURL: An array of strings for the URLs of the reboot monitors you are using like iPhone Controller or DCM Listener
 sendRebootAlerts: true/false - Bool to enable the DM message for rebooting a device
@@ -99,7 +103,8 @@ Instead, add it to PM2 with `pm2 start ecosystem.config.js`
 --`.restart`   »   to manually restart the whole bot<br>
 --`.reopen <DEVICE-NAMES>`   »   to reopen the game on specific devices<br>
 --`.reboot <DEVICE-NAMES>`   »   to reboot the specific devices<br>
+--`.sam <DEVICE-NAMES>`   »   to reapply the SAM profile to the specific devices<br>
 
-Reopen and reboot accept multiple names separated by commas.<br>
+The commands with `<DEVICE-NAMES>` accept multiple names separated by commas.<br>
 They can be used to skip the exclusion list if you specify a name on the list.<br>
 They can accept `all`, `allwarn`, or `alloff` to apply to groups but will omit devices on the exclude lists.
