@@ -80,6 +80,7 @@ excludeFromReapplySAM: An array of strings that are the unique names of the devi
 
 allowWarnReboots: true/false - Bool to enable RDMDeviceMonitor to send a reboot request to a monitor
 rebootAgainTimer: The time in minutes to wait before trying another reboot, in case the last reboot did not bring the device online
+maxRebootRetries: A number for limiting the amount of times a device is rebooted
 rebootMonitorURL: An array of strings for the URLs of the reboot monitors you are using like iPhone Controller or DCM Listener
 sendRebootAlerts: true/false - Bool to enable the DM message for rebooting a device
 excludeFromReboots: An array of strings that are the unique names of the devices to exclude from the reboot request

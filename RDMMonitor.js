@@ -490,7 +490,8 @@ function AddDevice(device) {
         "reapplied": false,
         "builds": 0,
         "rebooted_time": 0,
-        "retry_reboot": false
+        "retry_reboot": false,
+        "reboots": 0
     };
     if(!devices[device.uuid].lastSeen) {
         devices[device.uuid].lastSeen = "Never"
@@ -794,7 +795,7 @@ function RebootWarnDevice(manDevices) {
             if(lastSeen > warningTime) {
                 if(!config.excludeFromReboots.includes(deviceName)) {
                     warnedDevices.push(device.name);
-                    if(devices[deviceName].rebooted && Date.now() - devices[deviceName].rebooted_time > rebootTime ) {
+                    if(devices[deviceName].rebooted && devices[deviceName].reboots < config.maxRebootRetries && Date.now() - devices[deviceName].rebooted_time > rebootTime ) {
                         devices[deviceName].retry_reboot = true;
                     }
                 }
@@ -829,6 +830,7 @@ function RebootWarnDevice(manDevices) {
                 devices[warnedDevices[i]].rebooted = true;
                 devices[warnedDevices[i]].rebooted_time = Date.now();
                 devices[warnedDevices[i]].retry_reboot = false;
+                devices[warnedDevices[i]].reboots = devices[warnedDevices[i]].reboots + 1;
             }
         }
     }
@@ -837,6 +839,7 @@ function RebootWarnDevice(manDevices) {
             devices[deviceName].rebooted = false;
             devices[deviceName].rebooted_time = 0;
             devices[deviceName].retry_reboot = false;
+            devices[deviceName].reboots = 0;
             console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from rebooting the device`);
         }
     }
