@@ -5,6 +5,8 @@
     "deviceStatusChannel":"channelID",
     "instanceStatusChannel":"channelID",
     "deviceSummaryChannel":"channelID",
+    "deviceDetailedSummaryChannel":"channelID",
+    "questChannel":"channelID",
 
     "userAlerts": [],
 
@@ -15,6 +17,8 @@
     "postIndividualDevices":true,
     "postInstanceStatus":true,
     "postDeviceSummary":true,
+    "postDeviceDetailedSummary":true,
+    "postQuestSummary":true,
 
     "showInstance": true,
     "showAccount": true,
@@ -27,6 +31,7 @@
 
     "ignoredDevices": [],
     "ignoredInstances": [],
+    "ignoredQuestInstances": [],
 
     "postingDelay":1,
 
