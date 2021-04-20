@@ -641,124 +641,121 @@ async function PostGroupedDevices() {
 }
 
 async function PostGroupedDetailedDevices() {
-  return new Promise(async function(resolve) {
-    if(config.postDeviceDetailedSummary) {
-      console.log(GetTimestamp() + "Posting detailed device summary");
-      let now = new Date();
-      now = now.getTime();
-      let okDevices = [];
-      let warnDevices = [];
-      let offlineDevices = [];
-      let okDevicesCount = 0;
-      let warnDevicesCount = 0;
-      let offlineDevicesCount = 0;
-      for(let deviceName in devices) {
-        let device = devices[deviceName];
-        let lastSeen = new Date(0);
-        lastSeen.setUTCSeconds(device.lastSeen);
-        lastSeen = lastSeen.getTime();
-        lastSeen = now - lastSeen;
-        if(lastSeen > offlineTime) {
-          offlineDevices.push(device.name+" ("+device.instance+")");
-        }
-        else if(lastSeen > warningTime) {
-          warnDevices.push(device.name+" ("+device.instance+")");
+    return new Promise(async function(resolve) {
+        if(config.postDeviceDetailedSummary) {
+            console.log(GetTimestamp() + "Posting detailed device summary");
+            let now = new Date();
+            now = now.getTime();
+            let okDevices = [];
+            let warnDevices = [];
+            let offlineDevices = [];
+            let okDevicesCount = 0;
+            let warnDevicesCount = 0;
+            let offlineDevicesCount = 0;
+            for(let deviceName in devices) {
+                let device = devices[deviceName];
+                let lastSeen = new Date(0);
+                lastSeen.setUTCSeconds(device.lastSeen);
+                lastSeen = lastSeen.getTime();
+                lastSeen = now - lastSeen;
+                if(lastSeen > offlineTime) {
+                    offlineDevices.push(device.name + " (" + device.instance + ")");
+                }
+                else if(lastSeen > warningTime) {
+                    warnDevices.push(device.name + " (" + device.instance + ")");
+                }
+                else {
+                    okDevices.push(device.name + " (" + device.instance + ")");
+                }
+            }
+            okDevicesCount = okDevices.length;
+            warnDevicesCount = warnDevices.length;
+            offlineDevicesCount = offlineDevices.length;
+            if(okDevices.length == 0) {
+                okDevices.push("None")
+            }
+            if(warnDevices.length == 0) {
+                warnDevices.push("None")
+            }
+            if(offlineDevices.length == 0) {
+                offlineDevices.push("None")
+            }
+            PostDeviceDetailedGroup(okDevices, okColor, okImage, 'Working Devices: ' + okDevicesCount, okDeviceDetailedMessage).then(posted => {
+                okDeviceDetailedMessage = posted.id;
+                PostDeviceDetailedGroup(warnDevices, warningColor, warningImage, 'Warned Devices: ' + warnDevicesCount, warnDeviceDetailedMessage).then(posted => {
+                    warnDeviceDetailedMessage = posted.id;
+                    PostDeviceDetailedGroup(offlineDevices, offlineColor, offlineImage, 'Offline Devices: ' + offlineDevicesCount, offlineDeviceDetailedMessage).then(posted => {
+                        offlineDeviceDetailedMessage = posted.id;
+                        offlineDeviceList = offlineDevices;
+                        PostLastUpdatedDetailed();
+                        console.log(GetTimestamp() + "Finished posting detailed device summary");
+                        setTimeout(PostGroupedDetailedDevices, postingDelay);
+                        return resolve();
+                    });
+                });
+            });
         }
         else {
-          okDevices.push(device.name+" ("+device.instance+")");
-        }
-      }
-      okDevicesCount = okDevices.length;
-      warnDevicesCount = warnDevices.length;
-      offlineDevicesCount = offlineDevices.length;
-      if(okDevices.length == 0) {
-        okDevices.push("None")
-      }
-      if(warnDevices.length == 0) {
-        warnDevices.push("None")
-      }
-      if(offlineDevices.length == 0) {
-        offlineDevices.push("None")
-      }
-      PostDeviceDetailedGroup(okDevices, okColor, okImage, 'Working Devices: ' + okDevicesCount, okDeviceDetailedMessage).then(posted => {
-        okDeviceDetailedMessage = posted.id;
-        PostDeviceDetailedGroup(warnDevices, warningColor, warningImage, 'Warned Devices: ' + warnDevicesCount, warnDeviceDetailedMessage).then(posted => {
-          warnDeviceDetailedMessage = posted.id;
-          PostDeviceDetailedGroup(offlineDevices, offlineColor, offlineImage, 'Offline Devices: ' + offlineDevicesCount, offlineDeviceDetailedMessage).then(posted => {
-            offlineDeviceDetailedMessage = posted.id;
-            offlineDeviceList = offlineDevices;
-            PostLastUpdatedDetailed();
-            console.log(GetTimestamp() + "Finished posting detailed device summary");
-            setTimeout(PostGroupedDetailedDevices, postingDelay);
             return resolve();
-          });
-        });
-      });
-    }
-    else {
-      return resolve();
-    }
-  });
+        }
+    });
 }
 
 async function PostGroupedQuest() {
-  return new Promise(async function(resolve) {
-    if(config.postQuestSummary) {
-      console.log(GetTimestamp() + "Posting quest instance summary");
-      let now = new Date();
-      now = now.getTime();
-      let okQuests = [];
-      let warnQuests = [];
-      let offlineQuests = [];
-      for(let instanceName in instances) {
-        let instance = instances[instanceName];
-        if(instance.type == "research")
-        {
-          if(config.ignoredQuestInstances.length > 0)
-          {
-            if(config.ignoredQuestInstances.indexOf(instance.name) != -1) { continue }
-          }
-          if(instance.progress > 97)
-          {
-            okQuests.push(instance.name+" : "+instance.status);
-          }
-          else if(instance.progress > 30)
-          {
-            warnQuests.push(instance.name+" : "+instance.status);
-          }
-          else
-          {
-            offlineQuests.push(instance.name+" : "+instance.status);
-          }
+    return new Promise(async function(resolve) {
+        if(config.postQuestSummary) {
+            console.log(GetTimestamp() + "Posting quest instance summary");
+            let now = new Date();
+            now = now.getTime();
+            let okQuests = [];
+            let warnQuests = [];
+            let offlineQuests = [];
+            for(let instanceName in instances) {
+                let instance = instances[instanceName];
+                if(instance.type == "research") {
+                    if(config.ignoredQuestInstances.length > 0) {
+                        if(config.ignoredQuestInstances.indexOf(instance.name) != -1) {
+                            continue
+                        }
+                    }
+                    if(instance.progress > 97) {
+                        okQuests.push(instance.name + " : " + instance.status);
+                    }
+                    else if(instance.progress > 30) {
+                        warnQuests.push(instance.name + " : " + instance.status);
+                    }
+                    else {
+                        offlineQuests.push(instance.name + " : " + instance.status);
+                    }
+                }
+            }
+            if(okQuests.length == 0) {
+                okQuests.push("None")
+            }
+            if(warnQuests.length == 0) {
+                warnQuests.push("None")
+            }
+            if(offlineQuests.length == 0) {
+                offlineQuests.push("None")
+            }
+            PostQuestGroup(okQuests, okColor, okImage, 'Completed Quests', okQuestMessage).then(posted => {
+                okQuestMessage = posted.id;
+                PostQuestGroup(warnQuests, warningColor, warningImage, 'In progress Quests', warnQuestMessage).then(posted => {
+                    warnQuestMessage = posted.id;
+                    PostQuestGroup(offlineQuests, offlineColor, offlineImage, 'Problem Quests', offlineQuestMessage).then(posted => {
+                        offlineQuestMessage = posted.id;
+                        PostLastUpdatedQuest();
+                        console.log(GetTimestamp() + "Finished posting quest instance summary");
+                        setTimeout(PostGroupedQuest, postingDelay);
+                        return resolve();
+                    });
+                });
+            });
         }
-      }
-      if(okQuests.length == 0) {
-        okQuests.push("None")
-      }
-      if(warnQuests.length == 0) {
-        warnQuests.push("None")
-      }
-      if(offlineQuests.length == 0) {
-        offlineQuests.push("None")
-      }
-      PostQuestGroup(okQuests, okColor, okImage, 'Completed Quests', okQuestMessage).then(posted => {
-        okQuestMessage = posted.id;
-        PostQuestGroup(warnQuests, warningColor, warningImage, 'In progress Quests', warnQuestMessage).then(posted => {
-          warnQuestMessage = posted.id;
-          PostQuestGroup(offlineQuests, offlineColor, offlineImage, 'Problem Quests', offlineQuestMessage).then(posted => {
-            offlineQuestMessage = posted.id;
-            PostLastUpdatedQuest();
-            console.log(GetTimestamp() + "Finished posting quest instance summary");
-            setTimeout(PostGroupedQuest, postingDelay);
+        else {
             return resolve();
-          });
-        });
-      });
-    }
-    else {
-      return resolve();
-    }
-  });
+        }
+    });
 }
 
 function SendOfflineDeviceDMs() {
@@ -1069,79 +1066,79 @@ function PostDeviceGroup(deviceList, color, image, title, messageID) {
 }
 
 function PostDeviceDetailedGroup(deviceList, color, image, title, messageID) {
-  return new Promise(async function(resolve) {
-    let channel = config.deviceDetailedSummaryChannel ? config.deviceDetailedSummaryChannel : config.channel;
-    channel = await bot.channels.fetch(channel);
-    let deviceString = GetDeviceDetailedString(deviceList);
-    let embed = new Discord.MessageEmbed();
-    embed.setTitle(title);
-    embed.setColor(color);
-    embed.setThumbnail(image);
-    embed.setDescription(deviceString);
-    if(messageID) {
-      let message = await channel.messages.fetch(messageID);
-      if(!message) {
-        console.error(GetTimestamp() + "Missing detailed device summary message");
-        return resolve();
-      }
-      message.edit({
-        embed: embed
-      }).then(posted => {
-        return resolve(posted);
-      }).catch(error => {
-        console.error(GetTimestamp() + "Failed to edit a post: " + error);
-        return resolve();
-      });
-    }
-    else {
-      channel.send({
-        embed: embed
-      }).then(posted => {
-        return resolve(posted);
-      }).catch(err => {
-        console.error(GetTimestamp() + "Error sending a message: " + err);
-        return resolve();
-      });
-    }
-  });
+    return new Promise(async function(resolve) {
+        let channel = config.deviceDetailedSummaryChannel ? config.deviceDetailedSummaryChannel : config.channel;
+        channel = await bot.channels.fetch(channel);
+        let deviceString = GetDeviceDetailedString(deviceList);
+        let embed = new Discord.MessageEmbed();
+        embed.setTitle(title);
+        embed.setColor(color);
+        embed.setThumbnail(image);
+        embed.setDescription(deviceString);
+        if(messageID) {
+            let message = await channel.messages.fetch(messageID);
+            if(!message) {
+                console.error(GetTimestamp() + "Missing detailed device summary message");
+                return resolve();
+            }
+            message.edit({
+                embed: embed
+            }).then(posted => {
+                return resolve(posted);
+            }).catch(error => {
+                console.error(GetTimestamp() + "Failed to edit a post: " + error);
+                return resolve();
+            });
+        }
+        else {
+            channel.send({
+                embed: embed
+            }).then(posted => {
+                return resolve(posted);
+            }).catch(err => {
+                console.error(GetTimestamp() + "Error sending a message: " + err);
+                return resolve();
+            });
+        }
+    });
 }
 
 function PostQuestGroup(questList, color, image, title, messageID) {
-  return new Promise(async function(resolve) {
-    let channel = config.questChannel ? config.questChannel : config.channel;
-    channel = await bot.channels.fetch(channel);
-    let questString = GetQuestString(questList);
-    let embed = new Discord.MessageEmbed();
-    embed.setTitle(title);
-    embed.setColor(color);
-    embed.setThumbnail(image);
-    embed.setDescription(questString);
-    if(messageID) {
-      let message = await channel.messages.fetch(messageID);
-      if(!message) {
-        console.error(GetTimestamp() + "Missing quest summary message");
-        return resolve();
-      }
-      message.edit({
-        embed: embed
-      }).then(posted => {
-        return resolve(posted);
-      }).catch(error => {
-        console.error(GetTimestamp() + "Failed to edit a post: " + error);
-        return resolve();
-      });
-    }
-    else {
-      channel.send({
-        embed: embed
-      }).then(posted => {
-        return resolve(posted);
-      }).catch(err => {
-        console.error(GetTimestamp() + "Error sending a message: " + err);
-        return resolve();
-      });
-    }
-  });
+    return new Promise(async function(resolve) {
+        let channel = config.questChannel ? config.questChannel : config.channel;
+        channel = await bot.channels.fetch(channel);
+        let questString = GetQuestString(questList);
+        let embed = new Discord.MessageEmbed();
+        embed.setTitle(title);
+        embed.setColor(color);
+        embed.setThumbnail(image);
+        embed.setDescription(questString);
+        if(messageID) {
+            let message = await channel.messages.fetch(messageID);
+            if(!message) {
+                console.error(GetTimestamp() + "Missing quest summary message");
+                return resolve();
+            }
+            message.edit({
+                embed: embed
+            }).then(posted => {
+                return resolve(posted);
+            }).catch(error => {
+                console.error(GetTimestamp() + "Failed to edit a post: " + error);
+                return resolve();
+            });
+        }
+        else {
+            channel.send({
+                embed: embed
+            }).then(posted => {
+                return resolve(posted);
+            }).catch(err => {
+                console.error(GetTimestamp() + "Error sending a message: " + err);
+                return resolve();
+            });
+        }
+    });
 }
 
 function GetDeviceString(deviceList) {
@@ -1159,37 +1156,36 @@ function GetDeviceString(deviceList) {
     }
     return currentString;
 }
-
 function GetDeviceDetailedString(deviceList) {
-  let currentString = "";
-  for(let i = 0; i < deviceList.length; i++) {
-    if(currentString.length + deviceList[i].length + 2 > 2000) {
-      return currentString + "and more...";
+    let currentString = "";
+    for(let i = 0; i < deviceList.length; i++) {
+        if(currentString.length + deviceList[i].length + 2 > 2000) {
+            return currentString + "and more...";
+        }
+        if(i == deviceList.length - 1) {
+            currentString = currentString + deviceList[i];
+        }
+        else {
+            currentString = currentString + deviceList[i] + "\n";
+        }
     }
-    if(i == deviceList.length - 1) {
-      currentString = currentString + deviceList[i];
-    }
-    else {
-      currentString = currentString + deviceList[i] + "\n";
-    }
-  }
-  return currentString;
+    return currentString;
 }
 
 function GetQuestString(questList) {
-  let currentString = "";
-  for(let i = 0; i < questList.length; i++) {
-    if(currentString.length + questList[i].length + 2 > 2000) {
-      return currentString + "and more...";
+    let currentString = "";
+    for(let i = 0; i < questList.length; i++) {
+        if(currentString.length + questList[i].length + 2 > 2000) {
+            return currentString + "and more...";
+        }
+        if(i == questList.length - 1) {
+            currentString = currentString + questList[i];
+        }
+        else {
+            currentString = currentString + questList[i] + "\n";
+        }
     }
-    if(i == questList.length - 1) {
-      currentString = currentString + questList[i];
-    }
-    else {
-      currentString = currentString + questList[i] + "\n";
-    }
-  }
-  return currentString;
+    return currentString;
 }
 
 async function PostInstances() {
@@ -1243,61 +1239,61 @@ async function PostLastUpdated() {
 }
 
 async function PostLastUpdatedDetailed() {
-  let channel = config.deviceDetailedSummaryChannel ? config.deviceDetailedSummaryChannel : config.channel;
-  channel = await bot.channels.fetch(channel);
-  let now = new Date();
-  let lastUpdated = "Last Updated at: **" + now.toLocaleString() + "**";
-  if(lastUpdatedDetailedMessage) {
-    let message = await channel.messages.fetch(lastUpdatedDetailedMessage);
-    if(!message) {
-      return;
+    let channel = config.deviceDetailedSummaryChannel ? config.deviceDetailedSummaryChannel : config.channel;
+    channel = await bot.channels.fetch(channel);
+    let now = new Date();
+    let lastUpdated = "Last Updated at: **" + now.toLocaleString() + "**";
+    if(lastUpdatedDetailedMessage) {
+        let message = await channel.messages.fetch(lastUpdatedDetailedMessage);
+        if(!message) {
+            return;
+        }
+        message.edit(lastUpdated).then(edited => {
+            lastUpdatedDetailedMessage = edited.id;
+            return;
+        }).catch(error => {
+            console.log(GetTimestamp() + "Failed to edit a post: " + error);
+            return;
+        });
     }
-    message.edit(lastUpdated).then(edited => {
-      lastUpdatedDetailedMessage = edited.id;
-      return;
-    }).catch(error => {
-      console.log(GetTimestamp() + "Failed to edit a post: " + error);
-      return;
-    });
-  }
-  else {
-    channel.send(lastUpdated).then(message => {
-      lastUpdatedDetailedMessage = message.id;
-      return;
-    }).catch(err => {
-      console.error(GetTimestamp() + "Error sending a message: " + err);
-      return;
-    });
-  }
+    else {
+        channel.send(lastUpdated).then(message => {
+            lastUpdatedDetailedMessage = message.id;
+            return;
+        }).catch(err => {
+            console.error(GetTimestamp() + "Error sending a message: " + err);
+            return;
+        });
+    }
 }
 
 async function PostLastUpdatedQuest() {
-  let channel = config.questChannel ? config.questChannel : config.channel;
-  channel = await bot.channels.fetch(channel);
-  let now = new Date();
-  let lastUpdated = "Last Updated at: **" + now.toLocaleString() + "**";
-  if(lastUpdatedQuestMessage) {
-    let message = await channel.messages.fetch(lastUpdatedQuestMessage);
-    if(!message) {
-      return;
+    let channel = config.questChannel ? config.questChannel : config.channel;
+    channel = await bot.channels.fetch(channel);
+    let now = new Date();
+    let lastUpdated = "Last Updated at: **" + now.toLocaleString() + "**";
+    if(lastUpdatedQuestMessage) {
+        let message = await channel.messages.fetch(lastUpdatedQuestMessage);
+        if(!message) {
+            return;
+        }
+        message.edit(lastUpdated).then(edited => {
+            lastUpdatedQuestMessage = edited.id;
+            return;
+        }).catch(error => {
+            console.log(GetTimestamp() + "Failed to edit a post: " + error);
+            return;
+        });
     }
-    message.edit(lastUpdated).then(edited => {
-      lastUpdatedQuestMessage = edited.id;
-      return;
-    }).catch(error => {
-      console.log(GetTimestamp() + "Failed to edit a post: " + error);
-      return;
-    });
-  }
-  else {
-    channel.send(lastUpdated).then(message => {
-      lastUpdatedQuestMessage = message.id;
-      return;
-    }).catch(err => {
-      console.error(GetTimestamp() + "Error sending a message: " + err);
-      return;
-    });
-  }
+    else {
+        channel.send(lastUpdated).then(message => {
+            lastUpdatedQuestMessage = message.id;
+            return;
+        }).catch(err => {
+            console.error(GetTimestamp() + "Error sending a message: " + err);
+            return;
+        });
+    }
 }
 
 function PostInstance(instance) {
