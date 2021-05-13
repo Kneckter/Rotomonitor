@@ -788,7 +788,7 @@ function SendOfflineDeviceDMs() {
 }
 
 function ReopenWarnGame(manDevices) {
-    if(!config.allowReopenGame) {
+    if(!config.allowReopenGame && !manDevices) {
         return;
     }
     let now = new Date();
@@ -849,7 +849,7 @@ function ReopenWarnGame(manDevices) {
 }
 
 function ReapplySAM(manDevices) {
-    if(!config.allowReapplySAM) {
+    if(!config.allowReapplySAM && !manDevices) {
         return;
     }
     let now = new Date();
@@ -910,7 +910,7 @@ function ReapplySAM(manDevices) {
 }
 
 function RebootWarnDevice(manDevices) {
-    if(!config.allowWarnReboots) {
+    if(!config.allowWarnReboots && !manDevices) {
         return;
     }
     let now = new Date();
@@ -1156,6 +1156,7 @@ function GetDeviceString(deviceList) {
     }
     return currentString;
 }
+
 function GetDeviceDetailedString(deviceList) {
     let currentString = "";
     for(let i = 0; i < deviceList.length; i++) {
