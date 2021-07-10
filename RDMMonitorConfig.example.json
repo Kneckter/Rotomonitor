@@ -56,6 +56,8 @@
     "rebootMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
     "sendRebootAlerts": false,
     "excludeFromReboots": ["Device01","Device02"],
+    
+    "brightnessMonitorURL": ["http://192.168.0.1:6542","http://192.168.0.1:6543"],
 
     "cmdPrefix": ".",
     "adminRoleName": "ADMIN-ROLE-NAME"
