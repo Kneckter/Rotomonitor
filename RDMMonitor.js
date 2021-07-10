@@ -1034,7 +1034,6 @@ function ChangeBrightness(manDevices, brightInt) {
             });
         }
     }
-    setTimeout(ChangeBrightness, 60000);
 }
 
 async function SendDMAlert(device) {
