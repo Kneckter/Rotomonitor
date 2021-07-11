@@ -85,6 +85,8 @@ rebootMonitorURL: An array of strings for the URLs of the reboot monitors you ar
 sendRebootAlerts: true/false - Bool to enable the DM message for rebooting a device
 excludeFromReboots: An array of strings that are the unique names of the devices to exclude from the reboot request
 
+brightnessMonitorURL: An array of strings for the URLs of the brightness monitors you are using like iPhone Controller or DCM Listener
+
 cmdPrefix: A single character used to identify commands that the bot should react to
 adminRoleName: This is a string for the name of the main role that will admin the bot
 ```
@@ -106,6 +108,7 @@ Instead, add it to PM2 with `pm2 start ecosystem.config.js`
 --`.reopen <DEVICE-NAMES>`   »   to reopen the game on specific devices<br>
 --`.reboot <DEVICE-NAMES>`   »   to reboot the specific devices<br>
 --`.sam <DEVICE-NAMES>`   »   to reapply the SAM profile to the specific devices<br>
+--`.brightness <VALUE>, <DEVICE-NAMES>`   »   to change the brightness on the specific devices<br>
 
 The commands with `<DEVICE-NAMES>` accept multiple names separated by commas.<br>
 They can be used to skip the exclusion list if you specify a name on the list.<br>

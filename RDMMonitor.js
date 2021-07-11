@@ -107,6 +107,7 @@ bot.on('message', async message => {
                 "`" + config.cmdPrefix + "reopen <DEVICE-NAMES>`   \\\u00BB   to reopen the game on specific devices.\n" +
                 "`" + config.cmdPrefix + "reboot <DEVICE-NAMES>`   \\\u00BB   to reboot the specific devices.\n" +
                 "`" + config.cmdPrefix + "sam <DEVICE-NAMES>`   \\\u00BB   to reapply the SAM profile to the specific devices\n" +
+                "`" + config.cmdPrefix + "brightness <VALUE>, <DEVICE-NAMES>`   \\\u00BB   to change the brightness on the specific devices\n" +
                 "The commands with `<DEVICE-NAMES>` accept multiple names separated by commas.\n" +
                 "They can be used to skip the exclusion list if you specify a name on the list.\n" +
                 "They can accept `all`, `allwarn`, or `alloff` to apply to groups but will omit devices on the exclude lists."
@@ -135,6 +136,22 @@ bot.on('message', async message => {
             message.reply("Please enter a device name after the command like `" + config.cmdPrefix + "reboot 001-SE`");
             return;
         }
+        if(command === "brightness") {
+            let temp = parseInt(args[0]);
+            if (temp >= 0 && temp <= 100) {
+                var brightInt = temp;
+            }
+            else {
+                message.delete();
+                message.reply("Please enter a number for brightness between 0-100% after the command like `" + config.cmdPrefix + "brightness 0 001-SE`");
+                return;
+            }
+            if(!args[1]) {
+                message.delete();
+                message.reply("Please enter a device name after the brightness value like `" + config.cmdPrefix + "brightness 0 001-SE`");
+                return;
+            }
+        }
 
         // Handle all/alloff/allwarn variables and omit exclusions
         var manDevices = [];
@@ -149,7 +166,7 @@ bot.on('message', async message => {
             exclude = config.excludeFromReapplySAM;
         }
 
-        if (args.length == 1 && args[0] == "all") {
+        if (args[0] == "all" || args[1] == "all") {
             for(var deviceName in devices) {
                 let device = devices[deviceName];
                 if(!exclude.includes(deviceName)) {
@@ -157,7 +174,7 @@ bot.on('message', async message => {
                 }
             }
         }
-        else if (args.length == 1 && args[0] == "alloff") {
+        else if (args[0] == "alloff" || args[1] == "alloff") {
             let now = new Date();
             now = now.getTime();
             for(let deviceName in devices) {
@@ -171,7 +188,7 @@ bot.on('message', async message => {
                 }
             }
         }
-        else if (args.length == 1 && args[0] == "allwarn") {
+        else if (args[0] == "allwarn" || args[1] == "allwarn") {
             let now = new Date();
             now = now.getTime();
             for(let deviceName in devices) {
@@ -187,7 +204,13 @@ bot.on('message', async message => {
         }
         else {
             // Check all the device names and add them to the array
-            for(var x = 0; x < args.length; x++) {
+            if(command === "brightness") {
+                var x = 1;
+            }
+            else {
+                var x = 0;
+            }
+            for(x; x < args.length; x++) {
                 if (devices[args[x]]) {
                     manDevices.push(args[x]);
                 }
@@ -208,6 +231,10 @@ bot.on('message', async message => {
         else if(command === "sam") {
             // Reapply the SAM profile
             ReapplySAM(manDevices);
+        }
+        else if(command === "brightness") {
+            // Change the brightness on the device
+            ChangeBrightness(manDevices, brightInt);
         }
     }
     else {
@@ -978,6 +1005,35 @@ function RebootWarnDevice(manDevices) {
         }
     }
     setTimeout(RebootWarnDevice, 60000);
+}
+
+function ChangeBrightness(manDevices, brightInt) {
+    for(var i = 0; i < manDevices.length; i++) {
+        for(var ii = 0; ii < config.brightnessMonitorURL.length; ii++) {
+            const options = {
+                url: config.brightnessMonitorURL[ii],
+                json: true,
+                method: 'POST',
+                body: {
+                    'type': 'brightness',
+                    'device': devices[manDevices[i]].name,
+                    'value': brightInt
+                },
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+            };
+            console.info(GetTimestamp() + `Sending a brightness change request for ${devices[manDevices[i]].name} to remote listener ${config.brightnessMonitorURL[ii]}. New brightness will be ${brightInt}%`);
+            bot.channels.cache.get(config.channel).send(`Sending a brightness change request for ${devices[manDevices[i]].name} to remote listener. New brightness will be ${brightInt}%`);
+            request(options, (err, res, body) => {
+                if(err) {
+                    console.error(GetTimestamp() + `Failed to send the brightness change request to remote listener for ${options.body.device}`);
+                    bot.channels.cache.get(config.channel).send(`Failed to send the brightness change request to remote listener for ${options.body.device}`);
+                }
+            });
+        }
+    }
 }
 
 async function SendDMAlert(device) {
