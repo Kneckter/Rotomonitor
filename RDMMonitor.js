@@ -308,8 +308,13 @@ function UpdateInstances() {
                 data = JSON.parse(body);
             }
             catch (err) {
-                console.error(GetTimestamp() + "Could not retrieve data from website: " + body);
-                console.error(GetTimestamp() + err);
+                if(body.includes("RealDeviceMap is starting")) {
+                    console.error(GetTimestamp() + "Could not retrieve data from website while it was restarting.");
+                }
+                else {
+                    console.error(GetTimestamp() + "Could not retrieve data from website: " + body);
+                    console.error(GetTimestamp() + err);
+                }
                 return resolve();
             }
             if(data.status == "error" || !data.data || !data) {
@@ -488,8 +493,13 @@ function UpdateDevices() {
                 data = JSON.parse(body);
             }
             catch (err) {
-                console.error(GetTimestamp() + "Could not retrieve data from website: " + body);
-                console.error(GetTimestamp() + err);
+                if(body.includes("RealDeviceMap is starting")) {
+                    console.error(GetTimestamp() + "Could not retrieve data from website while it was restarting.");
+                }
+                else {
+                    console.error(GetTimestamp() + "Could not retrieve data from website: " + body);
+                    console.error(GetTimestamp() + err);
+                }
                 return resolve();
             }
             if(data.status == "error" || !data.data) {
