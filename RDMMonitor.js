@@ -1,7 +1,12 @@
 const Discord = require('discord.js');
 const bot = new Discord.Client();
 const request = require('request');
-const config = require('./RDMMonitorConfig.json');
+const path = require('path');
+const args = process.argv.splice(2);
+const configPath = args.length > 0
+    ? path.resolve(__dirname, args[0])
+    : './RDMMonitorConfig.json';
+const config = require(configPath);
 const warningImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/warned.png";
 const okImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/ok.png";
 const offlineImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/offline.png";

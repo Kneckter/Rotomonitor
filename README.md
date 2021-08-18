@@ -93,7 +93,7 @@ adminRoleName: This is a string for the name of the main role that will admin th
 
 # LAUNCHING IT
 
-Using terminal, run `node RDMMonitor.js`
+Using terminal, run `node RDMMonitor.js` or `node RDMMonitor.js config.json` if specifying a config file.
 
    * If you close that window, the bot connection will be terminated! You can add it to PM2 if you want it to run in the background.
 
