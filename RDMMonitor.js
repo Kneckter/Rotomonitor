@@ -7,7 +7,6 @@ const configPath = args.length > 0
     ? path.resolve(__dirname, args[0])
     : './RDMMonitorConfig.json';
 const config = require(configPath);
-const config = require('./RDMMonitorConfig.json');
 const warningImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/warned.png";
 const okImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/ok.png";
 const offlineImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/offline.png";
