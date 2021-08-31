@@ -148,12 +148,12 @@ bot.on('message', async message => {
             }
             else {
                 message.delete();
-                message.reply("Please enter a number for brightness between 0-100% after the command like `" + config.cmdPrefix + "brightness 0 001-SE`");
+                message.reply("Please enter a number for brightness between 0-100% after the command like `" + config.cmdPrefix + "brightness 0, 001-SE`");
                 return;
             }
             if(!args[1]) {
                 message.delete();
-                message.reply("Please enter a device name after the brightness value like `" + config.cmdPrefix + "brightness 0 001-SE`");
+                message.reply("Please enter a device name after the brightness value like `" + config.cmdPrefix + "brightness 0, 001-SE`");
                 return;
             }
         }
