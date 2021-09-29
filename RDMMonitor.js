@@ -20,7 +20,7 @@ const offlineTime = config.offlineTime * 60000;
 const rebuildTime = config.rebuildTime * 60000;
 const reopenTime = config.reopenTime * 60000;
 const rebootTime = config.rebootAgainTimer * 60000;
-//const reapplySAMTime = config.reapplySAMTime * 60000;
+const reapplySAMTime = config.reapplySAMTime * 60000;
 const okColor = 0x008000;
 const warningColor = 0xFFFF00;
 const offlineColor = 0xFF0000;
@@ -148,12 +148,12 @@ bot.on('message', async message => {
             }
             else {
                 message.delete();
-                message.reply("Please enter a number for brightness between 0-100% after the command like `" + config.cmdPrefix + "brightness 0 001-SE`");
+                message.reply("Please enter a number for brightness between 0-100% after the command like `" + config.cmdPrefix + "brightness 0, 001-SE`");
                 return;
             }
             if(!args[1]) {
                 message.delete();
-                message.reply("Please enter a device name after the brightness value like `" + config.cmdPrefix + "brightness 0 001-SE`");
+                message.reply("Please enter a device name after the brightness value like `" + config.cmdPrefix + "brightness 0, 001-SE`");
                 return;
             }
         }
@@ -597,7 +597,7 @@ async function PostStatus() {
     await PostGroupedQuest();
     await SendOfflineDeviceDMs();
     await ReopenWarnGame();
-    //await ReapplySAM();
+    await ReapplySAM();
     await RebootWarnDevice();
 }
 
@@ -846,7 +846,7 @@ function ReopenWarnGame(manDevices) {
             lastSeen.setUTCSeconds(device.lastSeen);
             lastSeen = lastSeen.getTime();
             lastSeen = now - lastSeen;
-            if(lastSeen > reopenTime) {
+            if(lastSeen > reopenTime && lastSeen < reapplySAMTime) {
                 if(!config.excludeFromReopen.includes(deviceName)) {
                     reopenDevices.push(device.name);
                 }
@@ -884,7 +884,14 @@ function ReopenWarnGame(manDevices) {
     for(var deviceName in devices) {
         if(devices[deviceName].reopened && reopenDevices.indexOf(deviceName) == -1) {
             devices[deviceName].reopened = false;
-            console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from reopening the game`);
+            let device = devices[deviceName];
+            let lastSeen = new Date(0);
+            lastSeen.setUTCSeconds(device.lastSeen);
+            lastSeen = lastSeen.getTime();
+            lastSeen = now - lastSeen;
+            if(lastSeen < reopenTime) {
+                console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from reopening the game`);
+            }
         }
     }
     setTimeout(ReopenWarnGame, 60000);
@@ -907,7 +914,7 @@ function ReapplySAM(manDevices) {
             lastSeen.setUTCSeconds(device.lastSeen);
             lastSeen = lastSeen.getTime();
             lastSeen = now - lastSeen;
-            if(lastSeen > reapplySAMTime) {
+            if(lastSeen > reapplySAMTime && lastSeen < warningTime) {
                 if(!config.excludeFromReapplySAM.includes(deviceName)) {
                     reapplyDevices.push(device.name);
                 }
@@ -943,12 +950,23 @@ function ReapplySAM(manDevices) {
         }
     }
     for(var deviceName in devices) {
+        if(devices[deviceName].reopened && reapplyDevices.indexOf(deviceName) != -1) {
+            // Remove the reopen tracker since it is out of that timeframe now.
+            devices[deviceName].reopened = false;
+        }
         if(devices[deviceName].reapplied && reapplyDevices.indexOf(deviceName) == -1) {
             devices[deviceName].reapplied = false;
-            console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from reapplying the profile`);
+            let device = devices[deviceName];
+            let lastSeen = new Date(0);
+            lastSeen.setUTCSeconds(device.lastSeen);
+            lastSeen = lastSeen.getTime();
+            lastSeen = now - lastSeen;
+            if(lastSeen < reapplySAMTime) {
+                console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from reapplying the profile`);
+            }
         }
     }
-    setTimeout(ReopenWarnGame, 60000);
+    setTimeout(ReapplySAM, 60000);
 }
 
 function RebootWarnDevice(manDevices) {
@@ -1011,6 +1029,14 @@ function RebootWarnDevice(manDevices) {
         }
     }
     for(var deviceName in devices) {
+        if(devices[deviceName].reopened && warnedDevices.indexOf(deviceName) != -1) {
+            // Remove the reopen tracker since it is out of that timeframe now.
+            devices[deviceName].reopened = false;
+        }
+        if(devices[deviceName].reapplied && warnedDevices.indexOf(deviceName) != -1) {
+            // Remove the sam tracker since it is out of that timeframe now.
+            devices[deviceName].reapplied = false;
+        }
         if(devices[deviceName].rebooted && warnedDevices.indexOf(deviceName) == -1) {
             devices[deviceName].rebooted = false;
             devices[deviceName].rebooted_time = 0;
