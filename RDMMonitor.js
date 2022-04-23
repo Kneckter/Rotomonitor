@@ -1,5 +1,10 @@
 const Discord = require('discord.js');
-const bot = new Discord.Client();
+const myIntents = new Discord.Intents();
+myIntents.add(Discord.Intents.FLAGS.GUILDS,
+              Discord.Intents.FLAGS.GUILD_MEMBERS,
+              Discord.Intents.FLAGS.GUILD_MESSAGES,
+              Discord.Intents.FLAGS.DIRECT_MESSAGES);
+const bot = new Discord.Client({ intents: myIntents });
 const request = require('request');
 const path = require('path');
 const args = process.argv.splice(2);
@@ -7,14 +12,14 @@ const configPath = args.length > 0
     ? path.resolve(__dirname, args[0])
     : './RDMMonitorConfig.json';
 const config = require(configPath);
-const warningImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/warned.png";
-const okImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/ok.png";
-const offlineImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/offline.png";
-const instanceImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/instance.png";
-const pokemonImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/pokemon.png";
-const raidImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/raids.png";
-const researchImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/research.png";
-const ivImage = "https://raw.githubusercontent.com/chuckleslove/RDMMonitor/master/static/iv.png";
+const warningImage = "https://raw.githubusercontent.com/Kneckter/RDMMonitor/master/static/warned.png";
+const okImage = "https://raw.githubusercontent.com/Kneckter/RDMMonitor/master/static/ok.png";
+const offlineImage = "https://raw.githubusercontent.com/Kneckter/RDMMonitor/master/static/offline.png";
+const instanceImage = "https://raw.githubusercontent.com/Kneckter/RDMMonitor/master/static/instance.png";
+const pokemonImage = "https://raw.githubusercontent.com/Kneckter/RDMMonitor/master/static/pokemon.png";
+const raidImage = "https://raw.githubusercontent.com/Kneckter/RDMMonitor/master/static/raids.png";
+const researchImage = "https://raw.githubusercontent.com/Kneckter/RDMMonitor/master/static/research.png";
+const ivImage = "https://raw.githubusercontent.com/Kneckter/RDMMonitor/master/static/iv.png";
 const warningTime = config.warningTime * 60000;
 const offlineTime = config.offlineTime * 60000;
 const rebuildTime = config.rebuildTime * 60000;
@@ -61,9 +66,9 @@ function Login() {
     let version = Discord.version;
     version = version.split('.');
     let primaryVersion = Number(version[0]);
-    if(primaryVersion < 12) {
-        console.log(GetTimestamp() + "FATAL ERROR: discord.js version must be 12.0 or newer, you are using: " + Discord.version);
-        console.log(GetTimestamp() + "Bot will not continue at this point, please upgrade discord.js, also requires node version 12 or newer");
+    if(primaryVersion < 13) {
+        console.log(GetTimestamp() + "FATAL ERROR: discord.js version must be 13.0 or newer, you are using: " + Discord.version);
+        console.log(GetTimestamp() + "Bot will not continue at this point, please upgrade discord.js, also requires node version 16 or newer");
     }
     else {
         console.log(GetTimestamp() + "Logging in Discord bot token");
@@ -71,13 +76,13 @@ function Login() {
     }
 }
 
-bot.on('message', async message => {
+bot.on('messageCreate', async message => {
     // MAKE SURE ITS A COMMAND
     if(!message.content.startsWith(config.cmdPrefix)) {
         return;
     }
     //STOP SCRIPT IF DM/PM
-    if(message.channel.type == "dm") {
+    if(message.channel.type == "DM") {
         return;
     }
     // GET CHANNEL INFO
@@ -117,9 +122,7 @@ bot.on('message', async message => {
                 "They can be used to skip the exclusion list if you specify a name on the list.\n" +
                 "They can accept `all`, `allwarn`, or `alloff` to apply to groups but will omit devices on the exclude lists."
             bot.channels.cache.get(config.channel).send(cmds).then((message) => {
-                message.delete({
-                    timeout: 60000
-                });
+                setTimeout(() => message.delete(), 10000);
             }).catch(err => {console.error(GetTimestamp()+err);});
             return;
         }
@@ -244,9 +247,7 @@ bot.on('message', async message => {
     }
     else {
         message.reply("You are **NOT** allowed to use this command! \ntry using: `" + config.cmdPrefix + "commands`").then((message) => {
-            message.delete({
-                timeout: 10000
-            });
+            setTimeout(() => message.delete(), 10000);
         }).catch(err => {console.error(GetTimestamp()+err);});
         return;
     }
@@ -1028,21 +1029,23 @@ function RebootWarnDevice(manDevices) {
             }
         }
     }
-    for(var deviceName in devices) {
-        if(devices[deviceName].reopened && warnedDevices.indexOf(deviceName) != -1) {
-            // Remove the reopen tracker since it is out of that timeframe now.
-            devices[deviceName].reopened = false;
-        }
-        if(devices[deviceName].reapplied && warnedDevices.indexOf(deviceName) != -1) {
-            // Remove the sam tracker since it is out of that timeframe now.
-            devices[deviceName].reapplied = false;
-        }
-        if(devices[deviceName].rebooted && warnedDevices.indexOf(deviceName) == -1) {
-            devices[deviceName].rebooted = false;
-            devices[deviceName].rebooted_time = 0;
-            devices[deviceName].retry_reboot = false;
-            devices[deviceName].reboots = 0;
-            console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from rebooting the device`);
+    if (!manDevices) { // Only remove tracking if this wasn't a manual request
+        for(var deviceName in devices) {
+            if(devices[deviceName].reopened && warnedDevices.indexOf(deviceName) != -1) {
+                // Remove the reopen tracker since it is out of that timeframe now.
+                devices[deviceName].reopened = false;
+            }
+            if(devices[deviceName].reapplied && warnedDevices.indexOf(deviceName) != -1) {
+                // Remove the sam tracker since it is out of that timeframe now.
+                devices[deviceName].reapplied = false;
+            }
+            if(devices[deviceName].rebooted && warnedDevices.indexOf(deviceName) == -1) {
+                devices[deviceName].rebooted = false;
+                devices[deviceName].rebooted_time = 0;
+                devices[deviceName].retry_reboot = false;
+                devices[deviceName].reboots = 0;
+                console.info(GetTimestamp() + `Device ${devices[deviceName].name} has come back online from rebooting the device`);
+            }
         }
     }
     setTimeout(RebootWarnDevice, 60000);
@@ -1141,7 +1144,7 @@ function PostDeviceGroup(deviceList, color, image, title, messageID) {
                 return resolve();
             }
             message.edit({
-                embed: embed
+                embeds: [embed]
             }).then(posted => {
                 return resolve(posted);
             }).catch(error => {
@@ -1151,7 +1154,7 @@ function PostDeviceGroup(deviceList, color, image, title, messageID) {
         }
         else {
             channel.send({
-                embed: embed
+                embeds: [embed]
             }).then(posted => {
                 return resolve(posted);
             }).catch(err => {
@@ -1179,7 +1182,7 @@ function PostDeviceDetailedGroup(deviceList, color, image, title, messageID) {
                 return resolve();
             }
             message.edit({
-                embed: embed
+                embeds: [embed]
             }).then(posted => {
                 return resolve(posted);
             }).catch(error => {
@@ -1189,7 +1192,7 @@ function PostDeviceDetailedGroup(deviceList, color, image, title, messageID) {
         }
         else {
             channel.send({
-                embed: embed
+                embeds: [embed]
             }).then(posted => {
                 return resolve(posted);
             }).catch(err => {
@@ -1217,7 +1220,7 @@ function PostQuestGroup(questList, color, image, title, messageID) {
                 return resolve();
             }
             message.edit({
-                embed: embed
+                embeds: [embed]
             }).then(posted => {
                 return resolve(posted);
             }).catch(error => {
@@ -1227,7 +1230,7 @@ function PostQuestGroup(questList, color, image, title, messageID) {
         }
         else {
             channel.send({
-                embed: embed
+                embeds: [embed]
             }).then(posted => {
                 return resolve(posted);
             }).catch(err => {
@@ -1400,7 +1403,7 @@ function PostInstance(instance) {
         channel = await bot.channels.fetch(channel);
         let embed = BuildInstanceEmbed(instance);
         let message = await channel.send({
-            'embed': embed
+            embeds: [embed]
         });
         instance.message = message.id;
         return resolve(true);
@@ -1418,7 +1421,7 @@ function EditInstancePost(instance) {
         }
         let embed = BuildInstanceEmbed(instance);
         message.edit({
-            'embed': embed
+            embeds: [embed]
         }).then(edited => {
             return resolve();
         }).catch((error) => {
@@ -1439,7 +1442,7 @@ function EditDevicePost(device) {
         }
         let embed = BuildDeviceEmbed(device);
         message.edit({
-            'embed': embed
+            embeds: [embed]
         }).then(edited => {
             return resolve();
         }).catch((error) => {
@@ -1453,9 +1456,9 @@ function PostDevice(device) {
     return new Promise(async function(resolve) {
         let channel = config.deviceStatusChannel ? config.deviceStatusChannel : config.channel;
         channel = await bot.channels.fetch(channel);
-        let message = BuildDeviceEmbed(device);
+        let embed = BuildDeviceEmbed(device);
         let sent = await channel.send({
-            embed: message
+            embeds: [embed]
         });
         device.message = sent.id;
         return resolve();
