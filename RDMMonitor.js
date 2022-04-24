@@ -1499,7 +1499,7 @@ function BuildInstanceEmbed(instance) {
         instanceDevices = "None";
     }
     embed.addField('Status', instance.status, true);
-    embed.addField('Device Count: ', deviceList.count, true);
+    embed.addField('Device Count: ', deviceList.count.toString(), true);
     embed.addField('Deivce List: ', instanceDevices, true);
     if(instance.type == 'iv' && instance.queue) {
         embed.addField('Queue', instance.queue, true);
@@ -1507,7 +1507,7 @@ function BuildInstanceEmbed(instance) {
     embed.setTitle(instance.name);
     embed.setColor(color);
     embed.setThumbnail(image);
-    embed.setFooter('Last Updated: ' + now.toLocaleString());
+    embed.setFooter({ text: 'Last Updated: ' + new Date().toLocaleString() });
     return embed;
 }
 
@@ -1541,7 +1541,7 @@ function BuildDeviceEmbed(device) {
         embed.addField('Host', device.host, true);
     }
     if(config.showBuildCount) {
-        embed.addField('Build Count', device.builds, true);
+        embed.addField('Build Count', device.builds.toString(), true);
     }
     if(config.showOnlineTime) {
         let currentUptime = 0;
@@ -1554,7 +1554,7 @@ function BuildDeviceEmbed(device) {
     embed.setColor(color);
     embed.setThumbnail(image);
     embed.setTitle(device.name);
-    embed.setFooter('Last Updated: ' + new Date().toLocaleString());
+    embed.setFooter({ text: 'Last Updated: ' + new Date().toLocaleString() });
     return embed;
 }
 
