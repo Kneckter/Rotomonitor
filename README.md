@@ -34,12 +34,16 @@ RDMDeviceMonitor is a simple discord bot to monitor device status for RDM.
 # SETTINGS
 ```
 token: Mandator, discord bot token, bot should have send message and manage message permissions in the designated channel
+
 channel: Default channel ID of where to post device/instance status
 deviceStatusChannel: Specific channel ID of where to post device status
 instanceStatusChannel: Specific channel ID of where to post instance status
 deviceSummaryChannel: Specific channel ID of where to post the device summary
+deviceDetailedSummaryChannel: Specific channel ID of where to post the device detailed summary
+questChannel: Specific channel ID of where to post the quest instance details
 
 userAlerts: an array of user IDs to DM upon device going offline
+
 url: URL of your RDM website, by default IP:9000 but can use actual URL if you have a properly configured reverse proxy
 websiteLogin: Username to login with
 websitePassword: Password for the username
@@ -49,6 +53,8 @@ The above user must have admin access to the website
 postIndividualDevices: true/false - Bool to post each device individually
 postInstanceStatus: true/false - Bool to post instance status
 postDeviceSummary: true/false - Bool to post device status in a single block by current status
+postDeviceDetailedSummary: true/false - Bool to post device detailed status in a single block by current status
+postQuestSummary: true/false - Bool to post quest instance status in a single block by current status
 
 showInstance: Show which instance a device is assigned to on the individual device post
 showAccount: Show account assigned on device post
@@ -61,6 +67,8 @@ clearMessagesOnStartup: Will delete all messages in the channel it is going to p
 
 ignoredDevices: An array of strings for the overall device blacklist
 ignoredInstances: An array of strings for the instance blacklist
+ignoredQuestInstances: An array of strings for the quest instance blacklist
+
 postingDelay: The time in minutes to delay different posting triggers
 
 warningTime: The time in minutes to consider a device in warning state
