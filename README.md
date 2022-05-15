@@ -96,6 +96,9 @@ excludeFromReboots: An array of strings that are the unique names of the devices
 
 brightnessMonitorURL: An array of strings for the URLs of the brightness monitors you are using like iPhone Controller or DCM Listener
 
+allowCMD: true/false - Bool to enable RDMDeviceMonitor to send a request to execute a predefined command on the monitor server
+cmdMonitorURL: An array of strings for the URLs of the monitors you want to send command requests to
+
 cmdPrefix: A single character used to identify commands that the bot should react to
 adminRoleName: This is a string for the name of the main role that will admin the bot
 ```
@@ -118,6 +121,7 @@ Instead, add it to PM2 with `pm2 start ecosystem.config.js`
 --`.reboot <DEVICE-NAMES>`   »   to reboot the specific devices<br>
 --`.sam <DEVICE-NAMES>`   »   to reapply the SAM profile to the specific devices<br>
 --`.brightness <VALUE>, <DEVICE-NAMES>`   »   to change the brightness on the specific devices<br>
+--`.cmd <ALIAS>`   »   to execute a pre-defined command on the listening server<br>
 
 The commands with `<DEVICE-NAMES>` accept multiple names separated by commas.<br>
 They can be used to skip the exclusion list if you specify a name on the list.<br>
