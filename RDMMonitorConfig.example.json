@@ -33,7 +33,9 @@
     "ignoredInstances": [],
     "ignoredQuestInstances": [],
 
+	"updateStatusDelay":1,					  
     "postingDelay":1,
+	"postingDateFormate":"en-GB",							 
 
     "warningTime": 10,
     "offlineTime": 15,

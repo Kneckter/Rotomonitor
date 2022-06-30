@@ -44,6 +44,8 @@ const WEBSITE_AUTH = {
     'jar': true
 };
 var postingDelay = config.postingDelay * 60000;
+var postingDateFormate = config.postingDateFormate;
+var pdateStatusDelay = config.updateStatusDelay * 60000;
 var devices = {};
 var instances = {};
 var okDeviceMessage = "";
@@ -296,7 +298,7 @@ async function UpdateStatusLoop() {
     await UpdateDevices();
     await UpdateInstances();
     console.log(GetTimestamp() + "Finished RDM query");
-    setTimeout(UpdateStatusLoop, 5000);
+    setTimeout(UpdateStatusLoop, pdateStatusDelay);
 }
 
 function UpdateInstances() {
@@ -1314,7 +1316,7 @@ async function PostLastUpdated() {
     let channel = config.deviceSummaryChannel ? config.deviceSummaryChannel : config.channel;
     channel = await bot.channels.fetch(channel);
     let now = new Date();
-    let lastUpdated = "Last Updated at: **" + now.toLocaleString() + "**";
+    let lastUpdated = "Last Updated at: **" + now.toLocaleString(postingDateFormate) + "**";
     if(lastUpdatedMessage) {
         let message = await channel.messages.fetch(lastUpdatedMessage);
         if(!message) {
@@ -1343,7 +1345,7 @@ async function PostLastUpdatedDetailed() {
     let channel = config.deviceDetailedSummaryChannel ? config.deviceDetailedSummaryChannel : config.channel;
     channel = await bot.channels.fetch(channel);
     let now = new Date();
-    let lastUpdated = "Last Updated at: **" + now.toLocaleString() + "**";
+    let lastUpdated = "Last Updated at: **" + now.toLocaleString(postingDateFormate) + "**";
     if(lastUpdatedDetailedMessage) {
         let message = await channel.messages.fetch(lastUpdatedDetailedMessage);
         if(!message) {
@@ -1372,7 +1374,7 @@ async function PostLastUpdatedQuest() {
     let channel = config.questChannel ? config.questChannel : config.channel;
     channel = await bot.channels.fetch(channel);
     let now = new Date();
-    let lastUpdated = "Last Updated at: **" + now.toLocaleString() + "**";
+    let lastUpdated = "Last Updated at: **" + now.toLocaleString(postingDateFormate) + "**";
     if(lastUpdatedQuestMessage) {
         let message = await channel.messages.fetch(lastUpdatedQuestMessage);
         if(!message) {
@@ -1507,7 +1509,7 @@ function BuildInstanceEmbed(instance) {
     embed.setTitle(instance.name);
     embed.setColor(color);
     embed.setThumbnail(image);
-    embed.setFooter({ text: 'Last Updated: ' + new Date().toLocaleString() });
+    embed.setFooter({ text: 'Last Updated: ' + new Date().toLocaleString(postingDateFormate) });
     return embed;
 }
 
@@ -1520,7 +1522,7 @@ function BuildDeviceEmbed(device) {
     if(config.showLastSeen) {
         let lastSeen = new Date(0);
         lastSeen.setUTCSeconds(device.lastSeen);
-        embed.addField('Last Seen: ', lastSeen.toLocaleString(), true);
+        embed.addField('Last Seen: ', lastSeen.toLocaleString(postingDateFormate), true);
         let lastSeenDifference = now - lastSeen.getTime();
         if(lastSeenDifference > warningTime) {
             color = warningColor;
@@ -1554,7 +1556,7 @@ function BuildDeviceEmbed(device) {
     embed.setColor(color);
     embed.setThumbnail(image);
     embed.setTitle(device.name);
-    embed.setFooter({ text: 'Last Updated: ' + new Date().toLocaleString() });
+    embed.setFooter({ text: 'Last Updated: ' + new Date().toLocaleString(postingDateFormate) });
     return embed;
 }
 
@@ -1665,7 +1667,7 @@ function UpdateDeviceState(device) {
         device.state = deviceState;
         switch (deviceState) {
             case "ok":
-                device.lastBuild = new Date().toLocaleString();
+                device.lastBuild = new Date().toLocaleString(postingDateFormate);
                 device.lastBuildTimestamp = new Date().getTime();
                 break;
             case "warn":
