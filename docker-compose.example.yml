@@ -1,0 +1,13 @@
+version: '3.2'
+
+services:
+  rdmmonitor:
+    container_name: rdm_monitor
+    build:
+      context: ./rdm_monitor # change according to your setup
+    restart: unless-stopped
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - rdm
