@@ -1500,7 +1500,7 @@ function BuildInstanceEmbed(instance) {
     }
     embed.addField('Status', instance.status, true);
     embed.addField('Device Count: ', deviceList.count.toString(), true);
-    embed.addField('Deivce List: ', instanceDevices, true);
+    embed.addField('Device List: ', instanceDevices, true);
     if(instance.type == 'iv' && instance.queue) {
         embed.addField('Queue', instance.queue, true);
     }
