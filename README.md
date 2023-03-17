@@ -18,7 +18,7 @@ RDMDeviceMonitor is a simple discord bot to monitor device status for RDM.
 
 5. Copy the example file `cp RDMMonitorConfig.example.json RDMMonitorConfig.json`.
 
-6. Create an applicaiton and get the your bot's secret token, and application ID at:
+6. Create an application and get the your bot's secret token, and application ID at:
    * https://discordapp.com/developers/applications/me
 
 7. Get your application/bot to join your server by going here:
@@ -30,6 +30,18 @@ RDMDeviceMonitor is a simple discord bot to monitor device status for RDM.
 8. Fill out the information needed in `nano RDMMonitorConfig.json`.
 
 <hr />
+
+# SETTING UP THE BOT USING DOCKER:
+
+1. Run `git clone https://github.com/Kneckter/RDMMonitor` to copy the bot.
+
+2. Change into the new folder `cd RDMMonitor/`.
+
+3. Build the container `docker build -t rdm-monitor .`
+
+4. Create the application and the configuration file according to step 6-8 from the previous section.
+
+5. Start the Docker container: `docker run -v ./RDMMonitorConfig.json:/app/RDMMonitorConfig.json rdm-monitor`
 
 # SETTINGS
 ```

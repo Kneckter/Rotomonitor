@@ -1,0 +1,9 @@
+/.gitignore
+/.dockerignore
+/Dockerfile
+/RDMMonitorConfig.example.json
+/README.md
+/ecosystem.config.js
+
+.git/
+static/
