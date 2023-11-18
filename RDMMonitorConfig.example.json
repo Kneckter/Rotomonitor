@@ -13,8 +13,6 @@
     "clearMessagesOnStartup": true,
 
     "ignoredDevices": [],
-    "ignoredInstances": [],
-    "ignoredQuestInstances": [],
 
     "postingDelay":1,
 

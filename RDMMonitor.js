@@ -149,7 +149,7 @@ bot.on('messageCreate', async message => {
         if (args[0] == "all" || args[1] == "all") {
             for(var deviceName in devices) {
                 let device = devices[deviceName];
-                if(!exclude.includes(deviceName)) {
+                if(!exclude.includes(deviceName.slice(0, -4))) {
                     manDevices.push(device.name);
                 }
             }
@@ -163,7 +163,7 @@ bot.on('messageCreate', async message => {
                 lastSeen.setUTCSeconds(device.lastSeen);
                 lastSeen = lastSeen.getTime();
                 lastSeen = now - lastSeen;
-                if(lastSeen > offlineTime && !exclude.includes(deviceName)) {
+                if(lastSeen > offlineTime && !exclude.includes(deviceName.slice(0, -4))) {
                     manDevices.push(device.name);
                 }
             }
@@ -177,7 +177,7 @@ bot.on('messageCreate', async message => {
                 lastSeen.setUTCSeconds(device.lastSeen);
                 lastSeen = lastSeen.getTime();
                 lastSeen = now - lastSeen;
-                if(lastSeen > warningTime && !exclude.includes(deviceName)) {
+                if(lastSeen > warningTime && !exclude.includes(deviceName.slice(0, -4))) {
                     manDevices.push(device.name);
                 }
             }
@@ -241,7 +241,7 @@ bot.on('error', function(err) {
     if(typeof err == 'object') {
         err = JSON.stringify(err);
     }
-    console.error(GetTimestamp() + 'Uncaught exception: ' + err);
+    console.error(GetTimestamp() + 'Bot error: ' + err);
     RestartBot();
     return;
 });
@@ -272,7 +272,7 @@ async function UpdateStatusLoop() {
 
 function UpdateDevices() {
     return new Promise(function(resolve) {
-        if(!config.postIndividualDevices && !config.postDeviceSummary && !config.postDeviceDetailedSummary) {
+        if(!config.postDeviceSummary) {
             return resolve(true);
         }
         request.get(config.rotomURL + DEVICE_QUERY, (err, res, body) => {
@@ -289,11 +289,11 @@ function UpdateDevices() {
                 return resolve();
             }
             if(!data.workers) {
-                console.error(GetTimestamp() + "Failed to retrieve device data from the website");
+                console.error(GetTimestamp() + "Failed to retrieve worker data from the website");
                 return resolve();
             }
             data.workers.forEach(async function(worker) {
-                if(!devices[worker.workerId]) {
+                if(!devices[worker.mitm.origin + worker.mitm.workerId.slice(-4)]) {
                     await AddDevice(worker);
                 }
                 else {
@@ -306,14 +306,15 @@ function UpdateDevices() {
 }
 
 function AddDevice(device) {
+    let name = device.mitm.origin + device.mitm.workerId.slice(-4);
     if(config.ignoredDevices.length > 0) {
-        if(config.ignoredDevices.indexOf(device.mitm.origin) != -1) {
+        if(config.ignoredDevices.indexOf(name.slice(-4)) != -1) {
             return;
         }
     }
-    devices[device.workerId] = {
-        "name": device.mitm.origin + device.mitm.workerId.slice(-4),
-        "lastSeen": device.mitm.dateLastMessageReceived,
+    devices[name] = {
+        "name": name,
+        "lastSeen": device.mitm.dateLastMessageReceived / 1000,
         "alerted": false,
         "rebooted": false,
         "reopened": false,
@@ -322,21 +323,22 @@ function AddDevice(device) {
         "retry_reboot": false,
         "reboots": 0
     };
-    if(!devices[device.workerId].lastSeen) {
-        devices[device.workerId].lastSeen = "Never"
+    if(!devices[name].lastSeen) {
+        devices[name].lastSeen = "Never"
     }
     return;
 }
 
 function UpdateDevice(device) {
-    if(!devices[device.workerId]) {
+    let name = device.mitm.origin + device.mitm.workerId.slice(-4);
+    if(!devices[name]) {
         return AddDevice(device);
     }
     else {
-        devices[device.workerId].lastSeen = device.mitm.dateLastMessageReceived;
+        devices[name].lastSeen = device.mitm.dateLastMessageReceived / 1000;
     }
-    if(!devices[device.workerId].lastSeen) {
-        devices[device.workerId].lastSeen = "Never"
+    if(!devices[name].lastSeen) {
+        devices[name].lastSeen = "Never"
     }
     return;
 }
@@ -367,6 +369,7 @@ async function PostGroupedDevices() {
                 lastSeen.setUTCSeconds(device.lastSeen);
                 lastSeen = lastSeen.getTime();
                 lastSeen = now - lastSeen;
+                console.log(lastSeen);
                 if(lastSeen > offlineTime) {
                     offlineDevices.push(device.name);
                 }
@@ -873,13 +876,13 @@ async function RestartBot(type) {
         process.exit(1);
     }
     else {
-        console.error(GetTimestamp() + "Unexpected error, bot stopping, likely websocket");
+        console.error(GetTimestamp() + "Unexpected error, bot exiting in 1 minute");
         await sleep(60000);
         process.exit(1);
     }
 }
 
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', err => {
     if(typeof err == 'object') {
         err = JSON.stringify(err);
     }
@@ -887,10 +890,8 @@ process.on('uncaughtException', function(err) {
     RestartBot();
 });
 
-process.on('unhandledRejection', function(err) {
-    if(typeof err == 'object') {
-        err = JSON.stringify(err);
-    }
-    console.error(GetTimestamp() + 'Uncaught exception: ' + err);
+process.on('unhandledRejection', (reason, p) => {
+    console.error(GetTimestamp() + 'Unhandled Rejection: ' + reason);
+    console.error(p);
     RestartBot();
 });
