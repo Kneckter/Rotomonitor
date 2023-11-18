@@ -369,7 +369,6 @@ async function PostGroupedDevices() {
                 lastSeen.setUTCSeconds(device.lastSeen);
                 lastSeen = lastSeen.getTime();
                 lastSeen = now - lastSeen;
-                console.log(lastSeen);
                 if(lastSeen > offlineTime) {
                     offlineDevices.push(device.name);
                 }
