@@ -392,11 +392,11 @@ async function PostGroupedDevices() {
             if(offlineDevices.length == 0) {
                 offlineDevices.push("None")
             }
-            PostDeviceGroup(okDevices, okColor, okImage, 'Working Devices: ' + okDevicesCount, okDeviceMessage).then(posted => {
+            PostDeviceGroup(okDevices.sort(), okColor, okImage, 'Working Devices: ' + okDevicesCount, okDeviceMessage).then(posted => {
                 okDeviceMessage = posted.id;
-                PostDeviceGroup(warnDevices, warningColor, warningImage, 'Warned Devices: ' + warnDevicesCount, warnDeviceMessage).then(posted => {
+                PostDeviceGroup(warnDevices.sort(), warningColor, warningImage, 'Warned Devices: ' + warnDevicesCount, warnDeviceMessage).then(posted => {
                     warnDeviceMessage = posted.id;
-                    PostDeviceGroup(offlineDevices, offlineColor, offlineImage, 'Offline Devices: ' + offlineDevicesCount, offlineDeviceMessage).then(posted => {
+                    PostDeviceGroup(offlineDevices.sort(), offlineColor, offlineImage, 'Offline Devices: ' + offlineDevicesCount, offlineDeviceMessage).then(posted => {
                         offlineDeviceMessage = posted.id;
                         offlineDeviceList = offlineDevices;
                         PostLastUpdated();
