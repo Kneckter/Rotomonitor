@@ -1,6 +1,6 @@
 {
   "name": "RDMMonitor",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "RDMDeviceMonitor is a simple discord bot to monitor device status for RDM.",
   "main": "RDMMonitor.js",
   "scripts": {

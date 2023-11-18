@@ -2,30 +2,13 @@
     "token":"",
 
     "channel": "channelID",
-    "deviceStatusChannel":"channelID",
-    "instanceStatusChannel":"channelID",
     "deviceSummaryChannel":"channelID",
-    "deviceDetailedSummaryChannel":"channelID",
-    "questChannel":"channelID",
 
     "userAlerts": [],
 
-    "url":"https://ip:9000/",
-    "websiteLogin": "user",
-    "websitePassword": "password",
+    "rotomURL":"http://ip:7072/",
 
-    "postIndividualDevices":true,
-    "postInstanceStatus":true,
     "postDeviceSummary":true,
-    "postDeviceDetailedSummary":true,
-    "postQuestSummary":true,
-
-    "showInstance": true,
-    "showAccount": true,
-    "showHost": true,
-    "showLastSeen": true,
-    "showBuildCount": true,
-    "showOnlineTime": true,
 
     "clearMessagesOnStartup": true,
 
@@ -37,9 +20,6 @@
 
     "warningTime": 10,
     "offlineTime": 15,
-    "rebuildTime": 0.25,
-
-    "queueLimit": 5,
 
     "allowReopenGame": true,
     "reopenTime": 5,

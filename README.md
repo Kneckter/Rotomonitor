@@ -44,9 +44,7 @@ questChannel: Specific channel ID of where to post the quest instance details
 
 userAlerts: an array of user IDs to DM upon device going offline
 
-url: URL of your RDM website, by default IP:9000 but can use actual URL if you have a properly configured reverse proxy
-websiteLogin: Username to login with
-websitePassword: Password for the username
+rotomURL: URL of your Rotom admin interface, by default IP:7072 but can use actual URL if you have a properly configured reverse proxy
 
 The above user must have admin access to the website
 
