@@ -288,7 +288,7 @@ function UpdateDevices() {
                 console.error(GetTimestamp() + "Error parsing the body: " + err);
                 return resolve();
             }
-            if(!data.workers) {
+            if(!data.workers || data.workers.length < 1) {
                 console.error(GetTimestamp() + "Failed to retrieve worker data from the website");
                 return resolve();
             }
@@ -445,6 +445,10 @@ function ReopenWarnGame(manDevices) {
     if(!config.allowReopenGame && !manDevices) {
         return;
     }
+    // If there's no device data, we may have gotten here too fast
+    if (devices.length < 1) {
+        return;
+    }
     let now = new Date();
     now = now.getTime();
     let reopenDevices = [];
@@ -511,6 +515,10 @@ function ReopenWarnGame(manDevices) {
 
 function ReapplySAM(manDevices) {
     if(!config.allowReapplySAM && !manDevices) {
+        return;
+    }
+    // If there's no device data, we may have gotten here too fast
+    if (devices.length < 1) {
         return;
     }
     let now = new Date();
@@ -583,6 +591,10 @@ function ReapplySAM(manDevices) {
 
 function RebootWarnDevice(manDevices) {
     if(!config.allowWarnReboots && !manDevices) {
+        return;
+    }
+    // If there's no device data, we may have gotten here too fast
+    if (devices.length < 1) {
         return;
     }
     let now = new Date();
