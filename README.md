@@ -41,6 +41,8 @@ deviceSummaryChannel: Specific channel ID of where to post the device summary
 userAlerts: an array of user IDs to DM upon device going offline
 
 rotomURL: URL of your Rotom admin interface, by default IP:7072 but can use actual URL if you have a properly configured reverse proxy
+basicUsername: Username for reverse proxy BasicAuth.
+basicPassword: Password for reverse proxy BasicAuth.
 
 postDeviceSummary: true/false - Bool to post device status in a single block by current status
 

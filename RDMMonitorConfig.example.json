@@ -7,6 +7,8 @@
     "userAlerts": [],
 
     "rotomURL":"http://ip:7072/",
+    "basicUsername":"",
+    "basicPassword":"",
 
     "postDeviceSummary":true,
 

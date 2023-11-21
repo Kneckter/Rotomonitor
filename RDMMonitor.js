@@ -24,6 +24,13 @@ const okColor = 0x008000;
 const warningColor = 0xFFFF00;
 const offlineColor = 0xFF0000;
 const DEVICE_QUERY = 'api/status';
+const WEBSITE_AUTH = {
+    'auth': {
+        'user': config.basicUsername,
+        'password': config.basicPassword
+    },
+    'jar': true
+};
 var postingDelay = config.postingDelay * 60000;
 var devices = {};
 var okDeviceMessage = "";
@@ -275,7 +282,7 @@ function UpdateDevices() {
         if(!config.postDeviceSummary) {
             return resolve(true);
         }
-        request.get(config.rotomURL + DEVICE_QUERY, (err, res, body) => {
+        request.get(config.rotomURL + DEVICE_QUERY, WEBSITE_AUTH, (err, res, body) => {
             if(err) {
                 console.error(GetTimestamp() + "Error querying Rotom: " + err.code);
                 return resolve();
