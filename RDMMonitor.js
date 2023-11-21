@@ -463,7 +463,7 @@ function ReopenWarnGame(manDevices) {
             lastSeen = lastSeen.getTime();
             lastSeen = now - lastSeen;
             if(lastSeen > reopenTime && lastSeen < reapplySAMTime) {
-                if(!config.excludeFromReopen.includes(deviceName.name.slice(0, -4))) {
+                if(!config.excludeFromReopen.includes(deviceName.slice(0, -4))) {
                     reopenDevices.push(deviceName);
                 }
             }
@@ -535,7 +535,7 @@ function ReapplySAM(manDevices) {
             lastSeen = lastSeen.getTime();
             lastSeen = now - lastSeen;
             if(lastSeen > reapplySAMTime && lastSeen < warningTime) {
-                if(!config.excludeFromReapplySAM.includes(deviceName.name.slice(0, -4))) {
+                if(!config.excludeFromReapplySAM.includes(deviceName.slice(0, -4))) {
                     reapplyDevices.push(deviceName);
                 }
             }
@@ -611,7 +611,7 @@ function RebootWarnDevice(manDevices) {
             lastSeen = lastSeen.getTime();
             lastSeen = now - lastSeen;
             if(lastSeen > warningTime) {
-                if(!config.excludeFromReboots.includes(deviceName.name.slice(0, -4))) {
+                if(!config.excludeFromReboots.includes(deviceName.slice(0, -4))) {
                     warnedDevices.push(deviceName);
                     if(devices[deviceName].rebooted && devices[deviceName].reboots < config.maxRebootRetries && Date.now() - devices[deviceName].rebooted_time > rebootTime ) {
                         devices[deviceName].retry_reboot = true;
