@@ -95,6 +95,7 @@ Instead, add it to PM2 with `pm2 start ecosystem.config.js`
 --`.reopen <DEVICE-NAMES>`   »   to reopen the game on specific devices<br>
 --`.reboot <DEVICE-NAMES>`   »   to reboot the specific devices<br>
 --`.sam <DEVICE-NAMES>`   »   to reapply the SAM profile to the specific devices<br>
+--`.delete <DEVICE-NAMES>`   »   to delete the specific devices from the monitor<br>
 --`.brightness <VALUE>, <DEVICE-NAMES>`   »   to change the brightness on the specific devices<br>
 
 The commands with `<DEVICE-NAMES>` accept multiple names separated by commas.<br>
