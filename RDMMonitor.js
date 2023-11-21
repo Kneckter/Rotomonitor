@@ -7,6 +7,7 @@ myIntents.add(Discord.Intents.FLAGS.GUILDS,
 const bot = new Discord.Client({ intents: myIntents });
 const request = require('request');
 const path = require('path');
+const sqlite3 = require('sqlite3');
 const args = process.argv.splice(2);
 const configPath = args.length > 0
     ? path.resolve(__dirname, args[0])
@@ -38,6 +39,7 @@ var warnDeviceMessage = "";
 var offlineDeviceMessage = "";
 var lastUpdatedMessage = "";
 var channelsCleared = false;
+var sql = new sqlite3.Database('./deviceDB.sqlite');
 
 Login();
 
@@ -46,11 +48,11 @@ function Login() {
     version = version.split('.');
     let primaryVersion = Number(version[0]);
     if(primaryVersion < 13) {
-        console.log(GetTimestamp() + "FATAL ERROR: discord.js version must be 13.0 or newer, you are using: " + Discord.version);
-        console.log(GetTimestamp() + "Bot will not continue at this point, please upgrade discord.js, also requires node version 16 or newer");
+        console.info(GetTimestamp() + "FATAL ERROR: discord.js version must be 13.0 or newer, you are using: " + Discord.version);
+        console.info(GetTimestamp() + "Bot will not continue at this point, please upgrade discord.js, also requires node version 16 or newer");
     }
     else {
-        console.log(GetTimestamp() + "Logging in Discord bot token");
+        console.info(GetTimestamp() + "Logging in Discord bot token");
         bot.login(config.token);
     }
 }
@@ -82,7 +84,7 @@ bot.on('messageCreate', async message => {
     let AdminR = guild.roles.cache.find(role => role.name === config.adminRoleName);
     if(!AdminR) {
         AdminR = { "id": "111111111111111111" };
-        console.info(GetTimestamp() + "[ERROR] [CONFIG] I could not find admin role: " + config.adminRoleName);
+        console.error(GetTimestamp() + "[ERROR] [CONFIG] I could not find admin role: " + config.adminRoleName);
     }
     //STOP SCRIPT IF IT IS NOT THE MAIN CHANNEL
     if (config.channel != channel) {
@@ -96,6 +98,7 @@ bot.on('messageCreate', async message => {
                 "`" + config.cmdPrefix + "reopen <DEVICE-NAMES>`   \\\u00BB   to reopen the game on specific devices.\n" +
                 "`" + config.cmdPrefix + "reboot <DEVICE-NAMES>`   \\\u00BB   to reboot the specific devices.\n" +
                 "`" + config.cmdPrefix + "sam <DEVICE-NAMES>`   \\\u00BB   to reapply the SAM profile to the specific devices\n" +
+                "`" + config.cmdPrefix + "delete <DEVICE-NAMES>`   \\\u00BB   to delete the specific devices from the monitor.\n" +
                 "`" + config.cmdPrefix + "brightness <VALUE>, <DEVICE-NAMES>`   \\\u00BB   to change the brightness on the specific devices\n" +
                 "The commands with `<DEVICE-NAMES>` accept multiple names separated by commas.\n" +
                 "They can be used to skip the exclusion list if you specify a name on the list.\n" +
@@ -223,6 +226,10 @@ bot.on('messageCreate', async message => {
             // Change the brightness on the device
             ChangeBrightness(manDevices, brightInt);
         }
+        else if(command === "delete") {
+            // Delete the device from the monitor list
+            await DeleteDB(manDevices);
+        }
     }
     else {
         message.reply("You are **NOT** allowed to use this command! \ntry using: `" + config.cmdPrefix + "commands`").then((message) => {
@@ -233,9 +240,9 @@ bot.on('messageCreate', async message => {
 });
 
 bot.on('ready', () => {
-    console.log(GetTimestamp() + "Discord bot logged in and ready");
+    console.info(GetTimestamp() + "Discord bot logged in and ready");
     if(config.warningTime > 1000 || config.offlineTime > 1000) {
-        console.log(GetTimestamp() + "WARNING warningTime and offlineTime should be in MINUTES not milliseconds");
+        console.warn(GetTimestamp() + "WARNING warningTime and offlineTime should be in MINUTES not milliseconds");
     }
     if(isNaN(postingDelay)) {
         postingDelay = 0;
@@ -266,22 +273,26 @@ function sleep(ms) {
 
 async function StartupSequence() {
     await ClearAllChannels();
+    await CreateDB();
     await UpdateStatusLoop();
     await PostStatus();
 }
 
 async function UpdateStatusLoop() {
-    console.log(GetTimestamp() + "Beginning device query");
+    console.info(GetTimestamp() + "Beginning device query");
     await UpdateDevices();
-    console.log(GetTimestamp() + "Finished device query");
+    console.info(GetTimestamp() + "Finished device query");
     setTimeout(UpdateStatusLoop, 5000);
 }
 
 function UpdateDevices() {
-    return new Promise(function(resolve) {
+    return new Promise(async function(resolve) {
         if(!config.postDeviceSummary) {
             return resolve(true);
         }
+        // Read local SQLite DB for stored devices before requesting the Rotom list.
+        await ReadDB();
+        // Request the Rotom list of devices
         request.get(config.rotomURL + DEVICE_QUERY, WEBSITE_AUTH, (err, res, body) => {
             if(err) {
                 console.error(GetTimestamp() + "Error querying Rotom: " + err.code);
@@ -312,7 +323,129 @@ function UpdateDevices() {
     });
 }
 
-function AddDevice(device) {
+function CreateDB() {
+    return new Promise(function(resolve) {
+        // CREATE DATABASE TABLE
+        sql.run(`CREATE TABLE IF NOT EXISTS deviceList (
+                    name TEXT, 
+                    lastSeen INTEGER, 
+                    alerted INTEGER, 
+                    rebooted INTEGER, 
+                    reopened INTEGER, 
+                    reapplied INTEGER, 
+                    rebooted_time INTEGER, 
+                    retry_reboot INTEGER, 
+                    reboots INTEGER)`, 
+                (err) => {
+            if(err) {
+                console.error(err.message);
+                RestartBot();
+            }
+            return resolve();
+        });
+    });
+}
+
+function ReadDB() {
+    return new Promise(function(resolve) {
+        sql.all(`SELECT * FROM deviceList`, (err, rows) => {
+            if(err) {
+                console.error(err.message);
+                RestartBot();
+            }
+            if(!rows) {
+                console.warn("No devices in the local DB.");
+                return resolve();
+            }
+            for (rowNumber = 0; rowNumber < rows.length; rowNumber++) {
+                let name = rows[rowNumber].name.toString();
+                devices[name] = {
+                    "name": name,
+                    "lastSeen": rows[rowNumber].lastSeen,
+                    "alerted": Boolean(rows[rowNumber].alerted),
+                    "rebooted": Boolean(rows[rowNumber].rebooted),
+                    "reopened": Boolean(rows[rowNumber].reopened),
+                    "reapplied": Boolean(rows[rowNumber].reapplied),
+                    "rebooted_time": rows[rowNumber].rebooted_time,
+                    "retry_reboot": Boolean(rows[rowNumber].retry_reboot),
+                    "reboots": rows[rowNumber].reboots
+                };
+            }
+            return resolve();
+        });
+    });
+}
+
+function InsertDB(device) {
+    return new Promise(function(resolve) {
+        sql.run(`INSERT INTO deviceList (
+                name, 
+                lastSeen, 
+                alerted, 
+                rebooted, 
+                reopened, 
+                reapplied, 
+                rebooted_time, 
+                retry_reboot, 
+                reboots) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                device.name, 
+                device.lastSeen, 
+                device.alerted, 
+                device.rebooted, 
+                device.reopened, 
+                device.reapplied, 
+                device.rebooted_time, 
+                device.retry_reboot, 
+                device.reboots
+            ], (err) => {
+            if(err) {
+                console.error(err.message);
+                RestartBot();
+            }
+            return resolve();
+        });
+    });
+}
+
+function UpdateDB(device) {
+    return new Promise(function(resolve) {
+        sql.run(`UPDATE deviceList SET lastSeen="${device.lastSeen}" WHERE name="${device.name}"`, (err) => {
+            if(err) {
+                console.error(err.message);
+                RestartBot();
+            }
+            return resolve();
+        });
+    });
+}
+
+function DeleteDB(manDevices) {
+    return new Promise(async function(resolve) {
+        for(var deviceName in manDevices) {
+            delete devices[manDevices[deviceName]];
+            await DeleteAwaitDB(manDevices[deviceName]);
+        }
+    });
+}
+
+function DeleteAwaitDB(deviceName) {
+    return new Promise(function(resolve) {
+        sql.run(`DELETE FROM deviceList WHERE name="${deviceName}"`, (err) => {
+            if(err) {
+                console.error(GetTimestamp() + `Failed to remove the following device: ${deviceName}`);
+                bot.channels.cache.get(config.channel).send(`Failed to remove the following device: ${deviceName}`);
+                return resolve();
+            }
+            console.info(GetTimestamp() + `Removed the following device: ${deviceName}`);
+            bot.channels.cache.get(config.channel).send(`Removed the following device: ${deviceName}`);
+            return resolve();
+        });
+    });
+}
+
+async function AddDevice(device) {
     let name = device.mitm.origin + device.mitm.workerId.slice(-4);
     if(config.ignoredDevices.length > 0) {
         if(config.ignoredDevices.indexOf(name.slice(-4)) != -1) {
@@ -321,7 +454,7 @@ function AddDevice(device) {
     }
     devices[name] = {
         "name": name,
-        "lastSeen": device.mitm.dateLastMessageReceived / 1000,
+        "lastSeen": Math.trunc(device.mitm.dateLastMessageReceived / 1000),
         "alerted": false,
         "rebooted": false,
         "reopened": false,
@@ -333,20 +466,22 @@ function AddDevice(device) {
     if(!devices[name].lastSeen) {
         devices[name].lastSeen = "Never"
     }
+    await InsertDB(devices[name]);
     return;
 }
 
-function UpdateDevice(device) {
+async function UpdateDevice(device) {
     let name = device.mitm.origin + device.mitm.workerId.slice(-4);
     if(!devices[name]) {
         return AddDevice(device);
     }
     else {
-        devices[name].lastSeen = device.mitm.dateLastMessageReceived / 1000;
+        devices[name].lastSeen = Math.trunc(device.mitm.dateLastMessageReceived / 1000);
     }
     if(!devices[name].lastSeen) {
         devices[name].lastSeen = "Never"
     }
+    await UpdateDB(devices[name]);
     return;
 }
 
@@ -361,7 +496,7 @@ async function PostStatus() {
 async function PostGroupedDevices() {
     return new Promise(async function(resolve) {
         if(config.postDeviceSummary) {
-            console.log(GetTimestamp() + "Posting device summary");
+            console.info(GetTimestamp() + "Posting device summary");
             let now = new Date();
             now = now.getTime();
             let okDevices = [];
@@ -406,7 +541,7 @@ async function PostGroupedDevices() {
                         offlineDeviceMessage = posted.id;
                         offlineDeviceList = offlineDevices;
                         PostLastUpdated();
-                        console.log(GetTimestamp() + "Finished posting device summary");
+                        console.info(GetTimestamp() + "Finished posting device summary");
                         setTimeout(PostGroupedDevices, postingDelay);
                         return resolve();
                     });
@@ -825,7 +960,7 @@ async function PostLastUpdated() {
             lastUpdatedMessage = edited.id;
             return;
         }).catch(error => {
-            console.log(GetTimestamp() + "Failed to edit a post: " + error);
+            console.error(GetTimestamp() + "Failed to edit a post: " + error);
             return;
         });
     }
@@ -848,15 +983,15 @@ function ClearAllChannels() {
         let cleared = [];
         if(config.channel) {
             cleared.push(ClearMessages(config.channel));
-            console.log(GetTimestamp() + "Clearing channel ID: " + config.channel);
+            console.info(GetTimestamp() + "Clearing channel ID: " + config.channel);
         }
         if(config.deviceSummaryChannel) {
             cleared.push(ClearMessages(config.deviceSummaryChannel));
-            console.log(GetTimestamp() + "Clearing channel ID: " + config.deviceSummaryChannel);
+            console.info(GetTimestamp() + "Clearing channel ID: " + config.deviceSummaryChannel);
         }
         Promise.all(cleared).then(done => {
             channelsCleared = true;
-            console.log(GetTimestamp() + "All channels cleared");
+            console.info(GetTimestamp() + "All channels cleared");
             return resolve();
         });
     });
@@ -874,11 +1009,12 @@ function ClearMessages(channelID) {
         }
         let messages = await channel.bulkDelete(100, true);
         if(messages.size > 0) {
+            await sleep(10000);
             await ClearMessages(channelID);
             return resolve(true);
         }
         else {
-            console.log("Finished clearing channel ID: " + channelID);
+            console.info("Finished clearing channel ID: " + channelID);
             return resolve(true);
         }
     });

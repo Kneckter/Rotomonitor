@@ -18,6 +18,7 @@
   "homepage": "https://github.com/Kneckter/RDMMonitor#readme",
   "dependencies": {
     "discord.js": "13.6.0",
-    "request": "2.88.2"
+    "request": "2.88.2",
+    "sqlite3": "5.1.6"
   }
 }
