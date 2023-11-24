@@ -43,6 +43,7 @@ const WEBSITE_AUTH = {
     },
     'jar': true
 };
+const wait = async ms => new Promise(done => setTimeout(done, ms));
 var postingDelay = config.postingDelay * 60000;
 var devices = {};
 var instances = {};
@@ -113,11 +114,12 @@ bot.on('messageCreate', async message => {
     if(member.roles.cache.has(AdminR.id)) {
         if(command === "help") {
             message.delete();
-            cmds = "`" + config.cmdPrefix + "restart`   \\\u00BB   to manually restart the whole bot.\n" +
-                "`" + config.cmdPrefix + "reopen <DEVICE-NAMES>`   \\\u00BB   to reopen the game on specific devices.\n" +
-                "`" + config.cmdPrefix + "reboot <DEVICE-NAMES>`   \\\u00BB   to reboot the specific devices.\n" +
-                "`" + config.cmdPrefix + "sam <DEVICE-NAMES>`   \\\u00BB   to reapply the SAM profile to the specific devices\n" +
-                "`" + config.cmdPrefix + "brightness <VALUE>, <DEVICE-NAMES>`   \\\u00BB   to change the brightness on the specific devices\n" +
+            var cmds = "`" + config.cmdPrefix + "restart`   \\\u00BB   to manually restart the whole bot.\n"
+            if(config.allowCMD) {cmds = cmds + "`" + config.cmdPrefix + "cmd <ALIAS>`   \\\u00BB   to execute a pre-defined command on the listening server.\n"}
+            if(config.allowReopenGame) {cmds = cmds + "`" + config.cmdPrefix + "reopen <DEVICE-NAMES>`   \\\u00BB   to reopen the game on specific devices.\n"}
+            if(config.allowWarnReboots) {cmds = cmds + "`" + config.cmdPrefix + "reboot <DEVICE-NAMES>`   \\\u00BB   to reboot the specific devices.\n"}
+            if(config.allowReapplySAM) {cmds = cmds + "`" + config.cmdPrefix + "sam <DEVICE-NAMES>`   \\\u00BB   to reapply the SAM profile to the specific devices\n"}
+            cmds = cmds + "`" + config.cmdPrefix + "brightness <VALUE>, <DEVICE-NAMES>`   \\\u00BB   to change the brightness on the specific devices\n" +
                 "The commands with `<DEVICE-NAMES>` accept multiple names separated by commas.\n" +
                 "They can be used to skip the exclusion list if you specify a name on the list.\n" +
                 "They can accept `all`, `allwarn`, or `alloff` to apply to groups but will omit devices on the exclude lists."
@@ -139,11 +141,17 @@ bot.on('messageCreate', async message => {
             }
         }
 
+        if(command === "cmd") {
+            CommandHandler(args)
+            return;
+        }
+
         if(!args[0]) {
             message.delete();
             message.reply("Please enter a device name after the command like `" + config.cmdPrefix + "reboot 001-SE`");
             return;
         }
+
         if(command === "brightness") {
             let temp = parseInt(args[0]);
             if (temp >= 0 && temp <= 100) {
@@ -873,7 +881,7 @@ function ReopenWarnGame(manDevices) {
                 console.info(GetTimestamp() + `Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener ${config.reopenMonitorURL[ii]}`);
                 if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener`); }
                 request(options, (err, res, body) => {
-                    if(err) {
+                    if(err || body.status == 'error') {
                         console.error(GetTimestamp() + `Failed to send reopen game request to remote listener for ${options.body.device}`);
                         if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reopen game request to remote listener for ${options.body.device}`); }
                     }
@@ -941,7 +949,7 @@ function ReapplySAM(manDevices) {
                 console.info(GetTimestamp() + `Sending a request to reapply the SAM profile for ${devices[reapplyDevices[i]].name} to remote listener ${config.reapplySAMMonitorURL[ii]}`);
                 if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending a request to reapply the SAM profile for ${devices[reapplyDevices[i]].name} to remote listener`); }
                 request(options, (err, res, body) => {
-                    if(err) {
+                    if(err || body.status == 'error') {
                         console.error(GetTimestamp() + `Failed to send request to reapply the SAM profile to remote listener for ${options.body.device}`);
                         if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send request to reapply the SAM profile to remote listener for ${options.body.device}`); }
                     }
@@ -1727,6 +1735,58 @@ function GetIVQueue(instanceName) {
     });
 }
 
+function CommandHandler(args) {
+    if(!config.allowCMD) {
+        return;
+    }
+    for(var ii = 0; ii < config.cmdMonitorURL.length; ii++) {
+        const options = {
+            url: config.cmdMonitorURL[ii],
+            json: true,
+            method: 'POST',
+            body: {
+                'type': 'cmd',
+                'cmdID': args[0]
+            },
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+        };
+        console.info(GetTimestamp() + `Sending request to execute command \`${args[0]}\` to remote listener ${config.cmdMonitorURL[ii]}.`);
+        bot.channels.cache.get(config.channel).send(`Sending request to execute command ${args[0]} to remote listener ${config.cmdMonitorURL[ii]}.`);
+        request(options, async (err, res, body) => {
+            if(err) {
+                console.error(GetTimestamp() + `Failed to execute command \`${args[0]}\` on remote listener ${options.url}. Error: \n${err}`);
+                bot.channels.cache.get(config.channel).send(`Failed to execute command ${args[0]} on remote listener ${options.url}. Error: \n${err}`);
+            }
+            else if (body.status == 'error') {
+                console.error(GetTimestamp() + `Failed to execute command \`${args[0]}\` on remote listener ${body.node}. Error: \n${body.message}`);
+                bot.channels.cache.get(config.channel).send(`Failed to execute command ${args[0]} on remote listener ${body.node}. Error: \n${body.message}`);
+            }
+            else {
+                // Need to check that the character limit is maintained.
+                // Loop to create the message that is 2000 chars
+                // First has to include the starting text
+                // Send if the length is less than 2000
+                console.info(GetTimestamp() + `Message from ${body.node} at ${options.url}.`);
+                bot.channels.cache.get(config.channel).send(`Message from ${body.node} at ${options.url}.`);
+                if (body.message.length <= 2000) {
+                    console.info(GetTimestamp() + body.message);
+                    bot.channels.cache.get(config.channel).send(body.message);
+                }
+                else {
+                    var m_array = body.message.match(/(.|[\r\n]){1,2000}/g);
+                    for (i = 0; i < m_array.length; i++) {
+                        console.info(GetTimestamp() + m_array[i]);
+                        bot.channels.cache.get(config.channel).send(m_array[i]);
+                        await wait(4000); // Wait 4 seconds between messages to be under the rate limit
+                    }
+                }
+            }
+        });
+    }
+}
 process.on('uncaughtException', function(err) {
     if(typeof err == 'object') {
         err = JSON.stringify(err);
