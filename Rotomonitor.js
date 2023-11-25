@@ -27,8 +27,8 @@ const offlineColor = 0xFF0000;
 const DEVICE_QUERY = 'api/status';
 const WEBSITE_AUTH = {
     'auth': {
-        'user': config.basicUsername,
-        'password': config.basicPassword
+        'user': config.basicUsername ? config.basicUsername : "",
+        'password': config.basicPassword ? config.basicPassword : ""
     },
     'jar': true
 };
