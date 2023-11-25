@@ -13,9 +13,9 @@ const configPath = args.length > 0
     ? path.resolve(__dirname, args[0])
     : './RotomonitorConfig.json';
 const config = require(configPath);
-const warningImage = "https://raw.githubusercontent.com/Kneckter/Rotomonitor/master/static/warned.png";
-const okImage = "https://raw.githubusercontent.com/Kneckter/Rotomonitor/master/static/ok.png";
-const offlineImage = "https://raw.githubusercontent.com/Kneckter/Rotomonitor/master/static/offline.png";
+const warningImage = "https://raw.githubusercontent.com/Kneckter/Rotomonitor/rotomonitor/static/warned.png";
+const okImage = "https://raw.githubusercontent.com/Kneckter/Rotomonitor/rotomonitor/static/ok.png";
+const offlineImage = "https://raw.githubusercontent.com/Kneckter/Rotomonitor/rotomonitor/static/offline.png";
 const warningTime = config.warningTime * 60000;
 const offlineTime = config.offlineTime * 60000;
 const reopenTime = config.reopenTime * 60000;
