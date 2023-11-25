@@ -10,13 +10,13 @@ RDMDeviceMonitor is a simple discord bot to monitor device status for Rotom <htt
 
 1. Download `Node.js ver v16.14.2` from https://nodejs.org/en/download/
 
-2. Run `git clone https://github.com/Kneckter/RDMMonitor` to copy the bot.
+2. Run `git clone https://github.com/Kneckter/Rotomonitor` to copy the bot.
 
-3. Change into the new folder `cd RDMMonitor/`.
+3. Change into the new folder `cd Rotomonitor/`.
 
 4. Run `npm install`.
 
-5. Copy the example file `cp RDMMonitorConfig.example.json RDMMonitorConfig.json`.
+5. Copy the example file `cp RotomonitorConfig.example.json RotomonitorConfig.json`.
 
 6. Create an applicaiton and get the your bot's secret token, and application ID at:
    * https://discordapp.com/developers/applications/me
@@ -27,7 +27,7 @@ RDMDeviceMonitor is a simple discord bot to monitor device status for Rotom <htt
      * Minimum requirements: manage messages, send messages, read message history
    * Use the URL that the page generates and go to it, and you will be asked to log into your discord. You will need **Admin** access in order to get the bot to join that server.
 
-8. Fill out the information needed in `nano RDMMonitorConfig.json`.
+8. Fill out the information needed in `nano RotomonitorConfig.json`.
 
 <hr />
 
@@ -80,7 +80,7 @@ adminRoleName: This is a string for the name of the main role that will admin th
 
 # LAUNCHING IT
 
-Using terminal, run `node RDMMonitor.js` or `node RDMMonitor.js config.json` if specifying a config file.
+Using terminal, run `node Rotomonitor.js` or `node Rotomonitor.js config.json` if specifying a config file.
 
    * If you close that window, the bot connection will be terminated! You can add it to PM2 if you want it to run in the background.
 

@@ -1,9 +1,9 @@
 module.exports = {
   apps : [
   {
-    name: 'RDMMonitor',
-    script: 'RDMMonitor.js',
-    cwd: '/home/user/RDMMonitor/',
+    name: 'Rotomonitor',
+    script: 'Rotomonitor.js',
+    cwd: '/home/user/Rotomonitor/',
     instances: 1,
     autorestart: true,
     watch: false,
