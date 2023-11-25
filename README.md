@@ -2,7 +2,7 @@
 
 This is a continuation of RDMMonitor by Chuckslove <https://github.com/chuckleslove/RDMMonitor>. We will continue to improve this repo where needed and keep it alive in his memory.
 
-RDMDeviceMonitor is a simple discord bot to monitor device status for Rotom <https://github.com/UnownHash/Rotom>.
+Rotomonitor is a simple discord bot to monitor device status for Rotom <https://github.com/UnownHash/Rotom>.
 
 <hr />
 
@@ -55,17 +55,17 @@ postingDelay: The time in minutes to delay different posting triggers
 warningTime: The time in minutes to consider a device in warning state
 offlineTime: The time in minutes a device must be offline before marked as red/offline and send a DM to the designated users
 
-allowReopenGame: true/false - Bool to enable RDMDeviceMonitor to send a reopen game request to a monitor
+allowReopenGame: true/false - Bool to enable Rotomonitor to send a reopen game request to a monitor
 reopenTime: The time in minutes to request a device to reopen the game
 reopenMonitorURL: An array of strings for the URLs of the reopen game monitors you are using like iPhone Controller or DCM Listener
 excludeFromReopen: An array of strings that are the unique names of the devices to exclude from the reopen game request
 
-allowReapplySAM: true/false - Bool to enable RDMDeviceMonitor to send a request to a monitor for reapplying the SAM profile.
+allowReapplySAM: true/false - Bool to enable Rotomonitor to send a request to a monitor for reapplying the SAM profile.
 reapplySAMTime: The time in minutes to request a device have the SAM profile reapplied automatically. DO NOT put this timer 2 minutes from a reboot, it could cause the phone to have no SAM profile. 
 reapplySAMMonitorURL: An array of strings for the URLs of the reapply SAM monitors you are using like iPhone Controller or DCM Listener
 excludeFromReapplySAM: An array of strings that are the unique names of the devices to exclude from the reapply SAM request
 
-allowWarnReboots: true/false - Bool to enable RDMDeviceMonitor to send a reboot request to a monitor
+allowWarnReboots: true/false - Bool to enable Rotomonitor to send a reboot request to a monitor
 rebootAgainTimer: The time in minutes to wait before trying another reboot, in case the last reboot did not bring the device online
 maxRebootRetries: A number for limiting the amount of times a device is rebooted
 rebootMonitorURL: An array of strings for the URLs of the reboot monitors you are using like iPhone Controller or DCM Listener
