@@ -311,7 +311,7 @@ function UpdateDevices() {
                 return resolve();
             }
             data.workers.forEach(async function(worker) {
-                if(!devices[worker.mitm.origin + worker.mitm.workerId.slice(-4)]) {
+                if(!devices[worker.worker.origin + worker.worker.workerId.slice(-4)]) {
                     await AddDevice(worker);
                 }
                 else {
@@ -446,7 +446,7 @@ function DeleteAwaitDB(deviceName) {
 }
 
 async function AddDevice(device) {
-    let name = device.mitm.origin + device.mitm.workerId.slice(-4);
+    let name = device.worker.origin + device.worker.workerId.slice(-4);
     if(config.ignoredDevices.length > 0) {
         if(config.ignoredDevices.indexOf(name.slice(-4)) != -1) {
             return;
@@ -454,7 +454,7 @@ async function AddDevice(device) {
     }
     devices[name] = {
         "name": name,
-        "lastSeen": Math.trunc(device.mitm.dateLastMessageReceived / 1000),
+        "lastSeen": Math.trunc(device.worker.dateLastMessageReceived / 1000),
         "alerted": false,
         "rebooted": false,
         "reopened": false,
@@ -471,12 +471,12 @@ async function AddDevice(device) {
 }
 
 async function UpdateDevice(device) {
-    let name = device.mitm.origin + device.mitm.workerId.slice(-4);
+    let name = device.worker.origin + device.worker.workerId.slice(-4);
     if(!devices[name]) {
         return AddDevice(device);
     }
     else {
-        devices[name].lastSeen = Math.trunc(device.mitm.dateLastMessageReceived / 1000);
+        devices[name].lastSeen = Math.trunc(device.worker.dateLastMessageReceived / 1000);
     }
     if(!devices[name].lastSeen) {
         devices[name].lastSeen = "Never"
