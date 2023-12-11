@@ -40,6 +40,7 @@ var offlineDeviceMessage = "";
 var lastUpdatedMessage = "";
 var channelsCleared = false;
 var sql = new sqlite3.Database('./deviceDB.sqlite');
+var initDBRead = 1;
 
 Login();
 
@@ -291,7 +292,10 @@ function UpdateDevices() {
             return resolve(true);
         }
         // Read local SQLite DB for stored devices before requesting the Rotom list.
-        await ReadDB();
+        if(initDBRead) {
+            await ReadDB();
+            initDBRead = 0;
+        }
         // Request the Rotom list of devices
         request.get(config.rotomURL + DEVICE_QUERY, WEBSITE_AUTH, (err, res, body) => {
             if(err) {
@@ -454,6 +458,7 @@ async function AddDevice(device) {
     }
     devices[name] = {
         "name": name,
+        "parent": device.worker.origin,
         "lastSeen": Math.trunc(device.worker.dateLastMessageReceived / 1000),
         "alerted": false,
         "rebooted": false,
@@ -620,7 +625,7 @@ function ReopenWarnGame(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'reopen',
-                        'device': devices[reopenDevices[i]].name.slice(0, -4)
+                        'device': devices[reopenDevices[i]].parent
                     },
                     headers: {
                         'Accept': 'application/json',
@@ -635,7 +640,16 @@ function ReopenWarnGame(manDevices) {
                         if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reopen game request to remote listener for ${options.body.device}`); }
                     }
                 });
-                devices[reopenDevices[i]].reopened = true;
+                // Update all workers with the same parent device
+                for(var deviceName in devices) {
+                    if(reopenDevices.indexOf(deviceName) == -1) {
+                        continue;
+                    }
+                    if(deviceName.parent != devices[reopenDevices[i]].parent) {
+                        continue;
+                    }
+                    devices[deviceName].reopened = true;
+                }
             }
         }
     }
@@ -692,7 +706,7 @@ function ReapplySAM(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'profile',
-                        'device': devices[reapplyDevices[i]].name.slice(0, -4)
+                        'device': devices[reapplyDevices[i]].parent
                     },
                     headers: {
                         'Accept': 'application/json',
@@ -707,7 +721,16 @@ function ReapplySAM(manDevices) {
                         if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send request to reapply the SAM profile to remote listener for ${options.body.device}`); }
                     }
                 });
-                devices[reapplyDevices[i]].reapplied = true;
+                // Update all workers with the same parent device
+                for(var deviceName in devices) {
+                    if(reapplyDevices.indexOf(deviceName) == -1) {
+                        continue;
+                    }
+                    if(deviceName.parent != devices[reapplyDevices[i]].parent) {
+                        continue;
+                    }
+                    devices[deviceName].reopened = true;
+                }
             }
         }
     }
@@ -771,7 +794,7 @@ function RebootWarnDevice(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'restart',
-                        'device': devices[warnedDevices[i]].name.slice(0, -4)
+                        'device': devices[warnedDevices[i]].parent
                     },
                     headers: {
                         'Accept': 'application/json',
@@ -786,11 +809,20 @@ function RebootWarnDevice(manDevices) {
                         if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reboot request to remote listener for ${options.body.device}`); }
                     }
                 });
-                SendRebootAlert(warnedDevices[i].name);
-                devices[warnedDevices[i]].rebooted = true;
-                devices[warnedDevices[i]].rebooted_time = Date.now();
-                devices[warnedDevices[i]].retry_reboot = false;
-                devices[warnedDevices[i]].reboots = devices[warnedDevices[i]].reboots + 1;
+                SendRebootAlert(devices[warnedDevices[i]].parent);
+                // Update all workers with the same parent device
+                for(var deviceName in devices) {
+                    if(warnedDevices.indexOf(deviceName) == -1) {
+                        continue;
+                    }
+                    if(deviceName.parent != devices[warnedDevices[i]].parent) {
+                        continue;
+                    }
+                    devices[deviceName].rebooted = true;
+                    devices[deviceName].rebooted_time = Date.now();
+                    devices[deviceName].retry_reboot = false;
+                    devices[deviceName].reboots = devices[deviceName].reboots + 1;
+                }
             }
         }
     }

@@ -8,7 +8,7 @@ Rotomonitor is a simple discord bot to monitor device status for Rotom <https://
 
 # SETTING UP THE BOT:
 
-1. Download `Node.js ver v16.14.2` from https://nodejs.org/en/download/
+1. Download `Node.js ver v18.19.0` from https://nodejs.org/en/download/
 
 2. Run `git clone https://github.com/Kneckter/Rotomonitor` to copy the bot.
 

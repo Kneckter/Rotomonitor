@@ -1,6 +1,6 @@
 {
   "name": "Rotomonitor",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "RDMDeviceMonitor is a simple discord bot to monitor device status for RDM.",
   "main": "Rotomonitor.js",
   "scripts": {
