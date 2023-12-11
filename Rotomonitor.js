@@ -365,6 +365,7 @@ function ReadDB() {
                 let name = rows[rowNumber].name.toString();
                 devices[name] = {
                     "name": name,
+                    "parent": name.slice(0, -4),
                     "lastSeen": rows[rowNumber].lastSeen,
                     "alerted": Boolean(rows[rowNumber].alerted),
                     "rebooted": Boolean(rows[rowNumber].rebooted),
@@ -582,7 +583,7 @@ function SendOfflineDeviceDMs() {
     for(let deviceName in devices) {
         if(devices[deviceName].alerted && offlineDevices.indexOf(deviceName) == -1) {
             devices[deviceName].alerted = false;
-            SendDeviceOnlineAlert(deviceName.name);
+            SendDeviceOnlineAlert(devices[deviceName].name);
         }
     }
     setTimeout(SendOfflineDeviceDMs, 60000);
@@ -625,7 +626,7 @@ function ReopenWarnGame(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'reopen',
-                        'device': devices[reopenDevices[i]].parent
+                        'device': devices[reopenDevices[i]].name.slice(0, -4)
                     },
                     headers: {
                         'Accept': 'application/json',
@@ -645,7 +646,7 @@ function ReopenWarnGame(manDevices) {
                     if(reopenDevices.indexOf(deviceName) == -1) {
                         continue;
                     }
-                    if(deviceName.parent != devices[reopenDevices[i]].parent) {
+                    if(devices[deviceName].parent != devices[reopenDevices[i]].parent) {
                         continue;
                     }
                     devices[deviceName].reopened = true;
@@ -706,7 +707,7 @@ function ReapplySAM(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'profile',
-                        'device': devices[reapplyDevices[i]].parent
+                        'device': devices[reapplyDevices[i]].name.slice(0, -4)
                     },
                     headers: {
                         'Accept': 'application/json',
@@ -726,7 +727,7 @@ function ReapplySAM(manDevices) {
                     if(reapplyDevices.indexOf(deviceName) == -1) {
                         continue;
                     }
-                    if(deviceName.parent != devices[reapplyDevices[i]].parent) {
+                    if(devices[deviceName].parent != devices[reapplyDevices[i]].parent) {
                         continue;
                     }
                     devices[deviceName].reopened = true;
@@ -794,7 +795,7 @@ function RebootWarnDevice(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'restart',
-                        'device': devices[warnedDevices[i]].parent
+                        'device': devices[warnedDevices[i]].name.slice(0, -4)
                     },
                     headers: {
                         'Accept': 'application/json',
@@ -809,13 +810,13 @@ function RebootWarnDevice(manDevices) {
                         if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reboot request to remote listener for ${options.body.device}`); }
                     }
                 });
-                SendRebootAlert(devices[warnedDevices[i]].parent);
+                SendRebootAlert(devices[warnedDevices[i]].name);
                 // Update all workers with the same parent device
                 for(var deviceName in devices) {
                     if(warnedDevices.indexOf(deviceName) == -1) {
                         continue;
                     }
-                    if(deviceName.parent != devices[warnedDevices[i]].parent) {
+                    if(devices[deviceName].parent != devices[warnedDevices[i]].parent) {
                         continue;
                     }
                     devices[deviceName].rebooted = true;
@@ -964,15 +965,37 @@ function PostDeviceGroup(deviceList, color, image, title, messageID) {
 
 function GetDeviceString(deviceList) {
     let currentString = "";
+    var parentList = {};
     for(let i = 0; i < deviceList.length; i++) {
-        if(currentString.length + deviceList[i].length + 2 > 2000) {
+        if(deviceList[i] == "None") {
+            parentList["None"] = {"workers": "None"};
+            continue;
+        }
+        let pName = deviceList[i].slice(0, -4)
+        if(!parentList[pName]) {
+            parentList[pName] = {"workers": parseInt(deviceList[i].slice(-3),10)};
+            continue;
+        }
+        parentList[pName].workers = parentList[pName].workers + "," + parseInt(deviceList[i].slice(-3),10);
+    }
+    var stringList = [];
+    for(parent in parentList) {
+        if(parent == "None") {
+            stringList.push("None");
+            continue;
+        }
+        pString = parent + "(" + parentList[parent].workers + ")";
+        stringList.push(pString);
+    }
+    for(let i = 0; i < stringList.length; i++) {
+        if(currentString.length + stringList[i].length + 2 > 2000) {
             return currentString + "and more...";
         }
-        if(i == deviceList.length - 1) {
-            currentString = currentString + deviceList[i];
+        if(i == stringList.length - 1) {
+            currentString = currentString + stringList[i];
         }
         else {
-            currentString = currentString + deviceList[i] + ", ";
+            currentString = currentString + stringList[i] + ", ";
         }
     }
     return currentString;
