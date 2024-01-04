@@ -315,11 +315,20 @@ function UpdateDevices() {
                 return resolve();
             }
             data.workers.forEach(async function(worker) {
-                if(!devices[worker.worker.origin + worker.worker.workerId.slice(-4)]) {
-                    await AddDevice(worker);
+                let name = worker.worker.origin + worker.worker.workerId.slice(-4);
+                // Check for those weird characters from Rotom
+                // Go to the next name if it contains lone surrogates.
+                // In Node 20, we can use isWellFormed() and toWellFormed() instead of match
+                let surrogatePairs = name.match(/\p{Surrogate}/gu) || [];
+                if (surrogatePairs.length > 0) {
+                    console.warn(GetTimestamp() + "WARNING: Skipping device named: " + name);
+                    return;
+                }
+                if(!devices[name]) {
+                    await AddDevice(name, worker);
                 }
                 else {
-                    await UpdateDevice(worker);
+                    await UpdateDevice(name, worker);
                 }
             });
             return resolve();
@@ -354,11 +363,11 @@ function ReadDB() {
     return new Promise(function(resolve) {
         sql.all(`SELECT * FROM deviceList`, (err, rows) => {
             if(err) {
-                console.error(err.message);
+                console.error(GetTimestamp() + "Error: " + err.message);
                 RestartBot();
             }
             if(!rows) {
-                console.warn("No devices in the local DB.");
+                console.warn(GetTimestamp() + "WARNING: No devices in the local DB.");
                 return resolve();
             }
             for (rowNumber = 0; rowNumber < rows.length; rowNumber++) {
@@ -450,8 +459,7 @@ function DeleteAwaitDB(deviceName) {
     });
 }
 
-async function AddDevice(device) {
-    let name = device.worker.origin + device.worker.workerId.slice(-4);
+async function AddDevice(name, device) {
     if(config.ignoredDevices.length > 0) {
         if(config.ignoredDevices.indexOf(name.slice(-4)) != -1) {
             return;
@@ -476,8 +484,7 @@ async function AddDevice(device) {
     return;
 }
 
-async function UpdateDevice(device) {
-    let name = device.worker.origin + device.worker.workerId.slice(-4);
+async function UpdateDevice(name, device) {
     if(!devices[name]) {
         return AddDevice(device);
     }
