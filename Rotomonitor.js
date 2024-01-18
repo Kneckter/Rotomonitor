@@ -315,7 +315,15 @@ function UpdateDevices() {
                 return resolve();
             }
             data.workers.forEach(async function(worker) {
-                let name = worker.worker.origin + worker.worker.workerId.slice(-4);
+                var name = "";
+                if (worker.worker.origin.includes("Aegis")) {
+                    let idnum = worker.worker.workerId.split(/[-]+/).pop();
+                    name = worker.worker.deviceId + "_" + idnum.toString().padStart(3, '0');
+                    worker.worker.origin = worker.worker.deviceId;
+                }
+                else {
+                    name = worker.worker.origin + worker.worker.workerId.slice(-4);
+                }
                 // Check for those weird characters from Rotom
                 // Go to the next name if it contains lone surrogates.
                 // In Node 20, we can use isWellFormed() and toWellFormed() instead of match
@@ -486,7 +494,7 @@ async function AddDevice(name, device) {
 
 async function UpdateDevice(name, device) {
     if(!devices[name]) {
-        return AddDevice(device);
+        return AddDevice(name, device);
     }
     else {
         devices[name].lastSeen = Math.trunc(device.worker.dateLastMessageReceived / 1000);
