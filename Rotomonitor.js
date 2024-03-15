@@ -145,7 +145,7 @@ bot.on('messageCreate', async message => {
         }
 
         // Handle all/alloff/allwarn variables and omit exclusions
-        var manDevices = [];
+        var parentDevices = [];
         var exclude = [];
         if(command === "reboot") {
             exclude = config.excludeFromReboots;
@@ -160,8 +160,13 @@ bot.on('messageCreate', async message => {
         if (args[0] == "all" || args[1] == "all") {
             for(var deviceName in devices) {
                 let device = devices[deviceName];
-                if(!exclude.includes(deviceName.slice(0, -4))) {
-                    manDevices.push(device.name);
+                // Check if the parent is already on the list
+                if(parentDevices.includes(device.parent)) {
+                    continue;
+                }
+                if(!exclude.includes(device.parent)) {
+                    // Add the parent to the list
+                    parentDevices.push(device.parent);
                 }
             }
         }
@@ -170,12 +175,16 @@ bot.on('messageCreate', async message => {
             now = now.getTime();
             for(let deviceName in devices) {
                 let device = devices[deviceName];
+                // Check if the parent is already on the list
+                if(parentDevices.includes(device.parent)) {
+                    continue;
+                }
                 let lastSeen = new Date(0);
                 lastSeen.setUTCSeconds(device.lastSeen);
                 lastSeen = lastSeen.getTime();
                 lastSeen = now - lastSeen;
-                if(lastSeen > offlineTime && !exclude.includes(deviceName.slice(0, -4))) {
-                    manDevices.push(device.name);
+                if(lastSeen > offlineTime && !exclude.includes(device.parent)) {
+                    parentDevices.push(device.parent);
                 }
             }
         }
@@ -184,12 +193,16 @@ bot.on('messageCreate', async message => {
             now = now.getTime();
             for(let deviceName in devices) {
                 let device = devices[deviceName];
+                // Check if the parent is already on the list
+                if(parentDevices.includes(device.parent)) {
+                    continue;
+                }
                 let lastSeen = new Date(0);
                 lastSeen.setUTCSeconds(device.lastSeen);
                 lastSeen = lastSeen.getTime();
                 lastSeen = now - lastSeen;
-                if(lastSeen > warningTime && !exclude.includes(deviceName.slice(0, -4))) {
-                    manDevices.push(device.name);
+                if(lastSeen > warningTime && !exclude.includes(device.parent)) {
+                    parentDevices.push(device.parent);
                 }
             }
         }
@@ -202,12 +215,29 @@ bot.on('messageCreate', async message => {
                 var x = 0;
             }
             for(x; x < args.length; x++) {
-                if (devices[args[x]]) {
-                    manDevices.push(args[x]);
+                // Check if there is at least one device with the parent name before adding it
+                if (devices[args[x]+"_001"]) {
+                    parentDevices.push(args[x]);
                 }
                 else {
                     bot.channels.cache.get(config.channel).send("Could not locate device: " + args[x]);
                 }
+            }
+        }
+
+        // Look up all the devices that have the parents from the above checks
+        // The list for deleting devices needs all workers while the other commands only need the first worker to avoid multiple requests
+        var manDevices = [];
+        for(let parentName in parentDevices) {
+            if(command === "delete") {
+                for(let deviceName in devices) {
+                    if (deviceName.includes(parentDevices[parentName])) {
+                        manDevices.push(deviceName);
+                    }
+                }
+            }
+            else {
+                manDevices.push(parentDevices[parentName]+"_001");
             }
         }
 
@@ -626,7 +656,7 @@ function ReopenWarnGame(manDevices) {
             lastSeen = lastSeen.getTime();
             lastSeen = now - lastSeen;
             if(lastSeen > reopenTime && lastSeen < reapplySAMTime) {
-                if(!config.excludeFromReopen.includes(deviceName.slice(0, -4))) {
+                if(!config.excludeFromReopen.includes(device.parent)) {
                     reopenDevices.push(deviceName);
                 }
             }
@@ -641,15 +671,15 @@ function ReopenWarnGame(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'reopen',
-                        'device': devices[reopenDevices[i]].name.slice(0, -4)
+                        'device': devices[reopenDevices[i]].parent
                     },
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
                 };
-                console.info(GetTimestamp() + `Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener ${config.reopenMonitorURL[ii]}`);
-                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reopen game request for ${devices[reopenDevices[i]].name} to remote listener`); }
+                console.info(GetTimestamp() + `Sending reopen game request for ${devices[reopenDevices[i]].parent} to remote listener ${config.reopenMonitorURL[ii]}`);
+                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reopen game request for ${devices[reopenDevices[i]].parent} to remote listener`); }
                 request(options, (err, res, body) => {
                     if(err) {
                         console.error(GetTimestamp() + `Failed to send reopen game request to remote listener for ${options.body.device}`);
@@ -707,7 +737,7 @@ function ReapplySAM(manDevices) {
             lastSeen = lastSeen.getTime();
             lastSeen = now - lastSeen;
             if(lastSeen > reapplySAMTime && lastSeen < warningTime) {
-                if(!config.excludeFromReapplySAM.includes(deviceName.slice(0, -4))) {
+                if(!config.excludeFromReapplySAM.includes(device.parent)) {
                     reapplyDevices.push(deviceName);
                 }
             }
@@ -722,15 +752,15 @@ function ReapplySAM(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'profile',
-                        'device': devices[reapplyDevices[i]].name.slice(0, -4)
+                        'device': devices[reapplyDevices[i]].parent
                     },
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
                 };
-                console.info(GetTimestamp() + `Sending a request to reapply the SAM profile for ${devices[reapplyDevices[i]].name} to remote listener ${config.reapplySAMMonitorURL[ii]}`);
-                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending a request to reapply the SAM profile for ${devices[reapplyDevices[i]].name} to remote listener`); }
+                console.info(GetTimestamp() + `Sending a request to reapply the SAM profile for ${devices[reapplyDevices[i]].parent} to remote listener ${config.reapplySAMMonitorURL[ii]}`);
+                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending a request to reapply the SAM profile for ${devices[reapplyDevices[i]].parent} to remote listener`); }
                 request(options, (err, res, body) => {
                     if(err) {
                         console.error(GetTimestamp() + `Failed to send request to reapply the SAM profile to remote listener for ${options.body.device}`);
@@ -792,7 +822,7 @@ function RebootWarnDevice(manDevices) {
             lastSeen = lastSeen.getTime();
             lastSeen = now - lastSeen;
             if(lastSeen > warningTime) {
-                if(!config.excludeFromReboots.includes(deviceName.slice(0, -4))) {
+                if(!config.excludeFromReboots.includes(device.parent)) {
                     warnedDevices.push(deviceName);
                     if(devices[deviceName].rebooted && devices[deviceName].reboots < config.maxRebootRetries && Date.now() - devices[deviceName].rebooted_time > rebootTime ) {
                         devices[deviceName].retry_reboot = true;
@@ -810,22 +840,22 @@ function RebootWarnDevice(manDevices) {
                     method: 'POST',
                     body: {
                         'type': 'restart',
-                        'device': devices[warnedDevices[i]].name.slice(0, -4)
+                        'device': devices[warnedDevices[i]].parent
                     },
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
                 };
-                console.info(GetTimestamp() + `Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener ${config.rebootMonitorURL[ii]}`);
-                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reboot request for ${devices[warnedDevices[i]].name} to remote listener`); }
+                console.info(GetTimestamp() + `Sending reboot request for ${devices[warnedDevices[i]].parent} to remote listener ${config.rebootMonitorURL[ii]}`);
+                if (manDevices) { bot.channels.cache.get(config.channel).send(`Sending reboot request for ${devices[warnedDevices[i]].parent} to remote listener`); }
                 request(options, (err, res, body) => {
                     if(err) {
                         console.error(GetTimestamp() + `Failed to send reboot request to remote listener for ${options.body.device}`);
                         if (manDevices) { bot.channels.cache.get(config.channel).send(`Failed to send reboot request to remote listener for ${options.body.device}`); }
                     }
                 });
-                SendRebootAlert(devices[warnedDevices[i]].name);
+                SendRebootAlert(devices[warnedDevices[i]].parent);
                 // Update all workers with the same parent device
                 for(var deviceName in devices) {
                     if(warnedDevices.indexOf(deviceName) == -1) {
@@ -873,7 +903,7 @@ function ChangeBrightness(manDevices, brightInt) {
                 method: 'POST',
                 body: {
                     'type': 'brightness',
-                    'device': devices[manDevices[i]].name.slice(0, -4),
+                    'device': devices[manDevices[i]].parent,
                     'value': brightInt
                 },
                 headers: {
@@ -881,8 +911,8 @@ function ChangeBrightness(manDevices, brightInt) {
                     'Content-Type': 'application/json'
                 },
             };
-            console.info(GetTimestamp() + `Sending a brightness change request for ${devices[manDevices[i]].name} to remote listener ${config.brightnessMonitorURL[ii]}. New brightness will be ${brightInt}%`);
-            bot.channels.cache.get(config.channel).send(`Sending a brightness change request for ${devices[manDevices[i]].name} to remote listener. New brightness will be ${brightInt}%`);
+            console.info(GetTimestamp() + `Sending a brightness change request for ${devices[manDevices[i]].parent} to remote listener ${config.brightnessMonitorURL[ii]}. New brightness will be ${brightInt}%`);
+            bot.channels.cache.get(config.channel).send(`Sending a brightness change request for ${devices[manDevices[i]].parent} to remote listener. New brightness will be ${brightInt}%`);
             request(options, (err, res, body) => {
                 if(err) {
                     console.error(GetTimestamp() + `Failed to send the brightness change request to remote listener for ${options.body.device}`);
